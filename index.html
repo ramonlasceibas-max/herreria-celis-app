@@ -263,13 +263,43 @@
         function cerrarCotizadorCliente(){document.getElementById('modalCliente').classList.add('hidden');}
         function nextStep(s){document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden'));document.getElementById(`step${s}`).classList.remove('hidden');document.getElementById('stepCount').innerText=s;}
         function toggleFacturaCliente(){document.getElementById('boxFacturaCliente').classList.toggle('hidden',!document.getElementById('chkFactura').checked);}
-        function enviarWhatsAppCliente(){
-            const n=document.getElementById('cli_nombre').value,u=document.getElementById('cli_ubi').value,d=document.getElementById('cli_detalles').value;
-            if(!n)return Swal.fire('Falta Nombre','','warning');
-            let m=`👋 Hola Herrería Celis, soy *${n}*.\n📍 ${u}\n🛠️ ${document.getElementById('cli_tipo').value}\n📝 ${d}`;
-            if(document.getElementById('chkFactura').checked)m+=`\n📄 FACTURA: SI\nRFC: ${document.getElementById('f_rfc').value}`;
-            window.open(`https://wa.me/5215645826729?text=${encodeURIComponent(m)}`,'_blank');
-            cerrarCotizadorCliente();
+      function enviarWhatsAppCliente(){
+            // 1. Recolectar datos
+            const n = document.getElementById('cli_nombre').value;
+            const u = document.getElementById('cli_ubi').value || "Ubicación pendiente";
+            const d = document.getElementById('cli_detalles').value || "Sin detalles";
+            const tipo = document.getElementById('cli_tipo').value;
+
+            // 2. Validación de seguridad
+            if(!n || n.trim() === "") {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Falta tu nombre',
+                    text: 'Por favor regresa al Paso 1 y escribe tu nombre.',
+                    confirmButtonColor: '#00E5FF'
+                });
+                return;
+            }
+
+            // 3. Crear Mensaje
+            let m = `👋 Hola Herrería Celis, soy *${n}*.\n📍 *Ubicación:* ${u}\n🛠️ *Interés:* ${tipo}\n📝 *Detalles:* ${d}`;
+            
+            if(document.getElementById('chkFactura').checked){
+                const rfc = document.getElementById('f_rfc').value || "Pendiente";
+                m += `\n\n📄 *REQUIERO FACTURA*\nRFC: ${rfc}`;
+            }
+
+            // 4. Generar Link Universal
+            // Usamos api.whatsapp.com que es más compatible con todos los celulares
+            const url = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`;
+
+            // 5. Ejecutar (Forzar apertura)
+            window.location.href = url; 
+
+            // Cerrar el modal para que se vea limpio al volver
+            setTimeout(() => {
+                cerrarCotizadorCliente();
+            }, 1000);
         }
 
         // ADMIN
@@ -492,3 +522,4 @@
 </body>
 
 </html>
+
