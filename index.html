@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herrería Celis | System V16.5</title>
+    <title>Herrería Celis | System V16.6</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,7 +25,7 @@
         .btn-primary { background: var(--neon); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0,229,255,0.4); }
 
-        #modalConfig, #modalCliente { z-index: 9999 !important; }
+        #modalConfig, #modalCliente, #modalPrecios { z-index: 9999 !important; }
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
@@ -90,7 +90,7 @@
         <div class="flex justify-between items-center mb-4 glass-card p-3 sticky top-0 z-40 bg-black/90">
             <div class="flex items-center gap-2 cursor-pointer" onclick="salirAdmin()">
                 <div class="w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center text-black font-bold">HC</div>
-                <div><h2 class="text-white font-bold text-sm">V16.5 SYSTEM</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
+                <div><h2 class="text-white font-bold text-sm">V16.6 SYSTEM</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
             </div>
             <div class="flex gap-2">
                 <button onclick="sincronizarNube()" class="btn-neon px-2 text-xs"><i class="fas fa-cloud"></i></button>
@@ -129,8 +129,7 @@
                         
                         <div class="grid grid-cols-3 gap-2 mb-2">
                             <div class="flex gap-1">
-                                <select id="item_tipo" class="input-celis text-xs w-full rounded-r-none">
-                                    </select>
+                                <select id="item_tipo" class="input-celis text-xs w-full rounded-r-none"></select>
                                 <button onclick="nuevoTipoTrabajo()" class="btn-neon px-2 text-[10px] text-green-500 border-green-500 hover:bg-green-900 rounded-l-none border-l-0" title="Nuevo Tipo">+</button>
                             </div>
                             <input type="number" id="item_ancho" class="input-celis text-xs text-center" placeholder="Ancho (m)">
@@ -148,7 +147,8 @@
                             <div class="flex gap-2 mb-2">
                                 <input list="listaMateriales" id="inputBusquedaMat" class="input-celis text-xs w-full" placeholder="Buscar material...">
                                 <datalist id="listaMateriales"></datalist>
-                                <button onclick="crearMaterial()" class="btn-neon px-2 text-[10px] border-green-500 text-green-500 hover:bg-green-500 hover:text-white" title="Crear Nuevo Material">+ Nuevo</button>
+                                <button onclick="crearMaterial()" class="btn-neon px-2 text-[10px] border-green-500 text-green-500 hover:bg-green-500 hover:text-white" title="Nuevo">+</button>
+                                <button onclick="abrirGestorPrecios()" class="btn-neon px-2 text-[10px] border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black" title="Editar Catálogo y Precios">💲</button>
                             </div>
                             <div class="flex gap-2 mb-2">
                                 <input type="number" id="mat_cant" class="input-celis w-20 text-center font-bold text-xs" value="1" placeholder="Cant">
@@ -238,6 +238,28 @@
         </div>
     </div>
 
+    <div id="modalPrecios" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-md p-6 border border-yellow-600 bg-black h-3/4 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-yellow-500 font-bold"><i class="fas fa-tags"></i> Catálogo de Precios</h2>
+                <button onclick="document.getElementById('modalPrecios').classList.add('hidden')" class="text-gray-500 hover:text-white">x</button>
+            </div>
+            
+            <input id="searchGestor" onkeyup="renderGestor()" class="input-celis mb-3 text-xs" placeholder="Filtrar materiales...">
+            
+            <div class="flex-1 overflow-y-auto border border-gray-800 rounded p-1 bg-gray-900/50">
+                <table class="w-full text-xs text-left">
+                    <thead class="text-gray-500 border-b border-gray-700 sticky top-0 bg-black">
+                        <tr><th class="p-2">Material</th><th class="p-2 text-right">Precio</th><th class="p-2 text-right">Acción</th></tr>
+                    </thead>
+                    <tbody id="listaGestorPrecios" class="text-gray-300">
+                        </tbody>
+                </table>
+            </div>
+            <p class="text-[9px] text-gray-500 mt-2 text-center">Toca el lápiz para actualizar precio. Toca la basura para borrar.</p>
+        </div>
+    </div>
+
     <script>
         let DB={config:{inflacion:0,indirectos:10,rol:'A',folioCount:1000,scriptURL:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[], tipos:[]};
         let listaConceptosGlobal=[], itemActual={materiales:[]};
@@ -271,42 +293,15 @@
         function toggleFacturaCliente(){document.getElementById('boxFacturaCliente').classList.toggle('hidden',!document.getElementById('chkFactura').checked);}
         
         function enviarWhatsAppCliente(){
-            // 1. Recolectar datos
             const n = document.getElementById('cli_nombre').value;
             const u = document.getElementById('cli_ubi').value || "Ubicación pendiente";
             const d = document.getElementById('cli_detalles').value || "Sin detalles";
             const tipo = document.getElementById('cli_tipo').value;
-
-            // 2. Validación de seguridad
-            if(!n || n.trim() === "") {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Falta tu nombre',
-                    text: 'Por favor regresa al Paso 1 y escribe tu nombre.',
-                    confirmButtonColor: '#00E5FF'
-                });
-                return;
-            }
-
-            // 3. Crear Mensaje
+            if(!n || n.trim() === "") { Swal.fire({icon:'warning',title:'Falta nombre',confirmButtonColor:'#00E5FF'}); return; }
             let m = `👋 Hola Herrería Celis, soy *${n}*.\n📍 *Ubicación:* ${u}\n🛠️ *Interés:* ${tipo}\n📝 *Detalles:* ${d}`;
-            
-            if(document.getElementById('chkFactura').checked){
-                const rfc = document.getElementById('f_rfc').value || "Pendiente";
-                m += `\n\n📄 *REQUIERO FACTURA*\nRFC: ${rfc}`;
-            }
-
-            // 4. Generar Link Universal
-            // Usamos api.whatsapp.com que es más compatible con todos los celulares
-            const url = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`;
-
-            // 5. Ejecutar (Forzar apertura)
-            window.location.href = url; 
-
-            // Cerrar el modal para que se vea limpio al volver
-            setTimeout(() => {
-                cerrarCotizadorCliente();
-            }, 1000);
+            if(document.getElementById('chkFactura').checked){ m += `\n\n📄 *REQUIERO FACTURA*\nRFC: ${document.getElementById('f_rfc').value}`; }
+            window.location.href = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`;
+            setTimeout(() => { cerrarCotizadorCliente(); }, 1000);
         }
 
         // ADMIN
@@ -323,6 +318,7 @@
                     const nombre = result.value[0];
                     const precio = parseFloat(result.value[1]);
                     CAT.push({n: nombre, p: precio});
+                    saveLocal(); // Guardar cambios en catalogo
                     renderCat();
                     document.getElementById('inputBusquedaMat').value = nombre;
                     Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false});
@@ -330,34 +326,91 @@
             });
         }
 
-        // --- GESTIÓN DE TIPOS DE TRABAJO ---
-        function renderTipos(){
-            // 1. Si no existen tipos guardados, usamos los básicos
-            if(!DB.tipos || DB.tipos.length === 0) {
-                DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura", "Escalera", "Reparación", "Soldadura Gral."];
-            }
-            // 2. Llenar el Select
-            const select = document.getElementById('item_tipo');
-            select.innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join('');
+        // --- GESTOR DE PRECIOS Y MATERIALES (NUEVO) ---
+        function abrirGestorPrecios(){
+            document.getElementById('modalPrecios').classList.remove('hidden');
+            document.getElementById('searchGestor').value = '';
+            renderGestor();
         }
 
-        function nuevoTipoTrabajo(){
+        function renderGestor(){
+            const txt = document.getElementById('searchGestor').value.toLowerCase();
+            const lista = document.getElementById('listaGestorPrecios');
+            const filtrados = CAT.filter(m => m.n.toLowerCase().includes(txt));
+            
+            lista.innerHTML = filtrados.map((m, i) => {
+                // Encontrar el índice real en el array original para poder editarlo
+                const realIndex = CAT.indexOf(m);
+                return `
+                <tr class="border-b border-gray-800 hover:bg-gray-800/50">
+                    <td class="p-2">${m.n}</td>
+                    <td class="p-2 text-right font-bold text-green-400">$${m.p}</td>
+                    <td class="p-2 text-right">
+                        <button onclick="editarPrecioMat(${realIndex})" class="text-yellow-500 mr-2 hover:scale-125 transition">✏️</button>
+                        <button onclick="borrarMaterial(${realIndex})" class="text-red-500 hover:scale-125 transition">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function editarPrecioMat(index){
+            const mat = CAT[index];
             Swal.fire({
-                title: 'Nuevo Tipo de Trabajo',
-                input: 'text',
-                inputPlaceholder: 'Ej: Soldadura a Domicilio',
-                background: '#000', color: '#fff', confirmButtonColor: '#00E5FF',
-                showCancelButton: true
+                title: `Editar: ${mat.n}`,
+                html: `<label class="block text-left text-xs text-gray-400">Nuevo Precio:</label>
+                       <input id="newPrice" type="number" class="swal2-input" value="${mat.p}">
+                       <label class="block text-left text-xs text-gray-400 mt-2">Corregir Nombre:</label>
+                       <input id="newName" type="text" class="swal2-input" value="${mat.n}">`,
+                background: '#000', color: '#fff', confirmButtonColor: '#Eab308',
+                preConfirm: () => {
+                    return {
+                        p: document.getElementById('newPrice').value,
+                        n: document.getElementById('newName').value
+                    }
+                }
             }).then((result) => {
-                if (result.isConfirmed && result.value) {
-                    // Agregamos a la lista y guardamos
-                    DB.tipos.push(result.value);
-                    saveLocal(); // Guardar en memoria del cel
-                    renderTipos(); // Actualizar lista visual
-                    
-                    // Seleccionar el nuevo automáticamente
-                    document.getElementById('item_tipo').value = result.value;
-                    Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false});
+                if(result.isConfirmed){
+                    CAT[index].p = parseFloat(result.value.p);
+                    CAT[index].n = result.value.n;
+                    saveLocal();
+                    renderCat();
+                    renderGestor();
+                    Swal.fire({toast:true, icon:'success', title:'Actualizado', position:'top-end', timer:1500, showConfirmButton:false});
+                }
+            });
+        }
+
+        function borrarMaterial(index){
+            Swal.fire({
+                title: '¿Eliminar?',
+                text: `Se borrará "${CAT[index].n}" de la lista.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                background: '#000', color: '#fff',
+                confirmButtonText: 'Sí, borrar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    CAT.splice(index, 1);
+                    saveLocal();
+                    renderCat();
+                    renderGestor();
+                    Swal.fire('Borrado', '', 'success');
+                }
+            });
+        }
+
+        // --- GESTIÓN DE TIPOS DE TRABAJO ---
+        function renderTipos(){
+            if(!DB.tipos || DB.tipos.length === 0) DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura", "Escalera", "Reparación", "Soldadura Gral."];
+            document.getElementById('item_tipo').innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join('');
+        }
+        function nuevoTipoTrabajo(){
+            Swal.fire({title: 'Nuevo Tipo', input: 'text', background: '#000', color: '#fff', confirmButtonColor: '#00E5FF', showCancelButton: true}).then((r) => {
+                if (r.isConfirmed && r.value) {
+                    DB.tipos.push(r.value); saveLocal(); renderTipos();
+                    document.getElementById('item_tipo').value = r.value;
                 }
             });
         }
@@ -396,14 +449,8 @@
                 mats:[...itemActual.materiales], 
                 subtotal: cFinal+(mo*fac)+inst
             });
-            
-            itemActual.materiales=[]; 
-            document.getElementById('item_desc').value=''; 
-            document.getElementById('item_mo').value=0; 
-            document.getElementById('item_inst').value=0; 
-            
-            renderItemMat(); 
-            renderListaGlobal(); 
+            itemActual.materiales=[]; document.getElementById('item_desc').value=''; document.getElementById('item_mo').value=0; document.getElementById('item_inst').value=0; 
+            renderItemMat(); renderListaGlobal(); 
             Swal.fire({toast:true, position:'top-end', icon:'success', title:'Proyecto Agregado.', timer:2000, showConfirmButton:false});
         }
 
@@ -423,28 +470,18 @@
         }
         function borrarC(i){listaConceptosGlobal.splice(i,1);renderListaGlobal();}
         
-        // --- LOGICA GLOBAL ACTUALIZADA PARA IVA ---
         function calcGlobal(){
             let sub = listaConceptosGlobal.reduce((s,x)=>s+x.subtotal,0);
             const fl = parseFloat(document.getElementById('global_flete').value)||0;
             const ma = parseFloat(document.getElementById('global_mani').value)||0;
-            
-            // Calculo IVA
             const cobrarIva = document.getElementById('chkIva').checked;
             let base = sub + fl + ma;
-            let ivaAmount = 0;
+            let ivaAmount = cobrarIva ? base * 0.16 : 0;
             
-            if(cobrarIva) {
-                ivaAmount = base * 0.16;
-                document.getElementById('rowIvaDisplay').classList.remove('hidden');
-            } else {
-                document.getElementById('rowIvaDisplay').classList.add('hidden');
-            }
-
+            document.getElementById('rowIvaDisplay').classList.toggle('hidden', !cobrarIva);
             document.getElementById('lblGlobalSub').innerText=`$${sub.toFixed(2)}`;
             document.getElementById('lblGlobalIva').innerText=`$${ivaAmount.toFixed(2)}`;
             document.getElementById('lblGlobalTotal').innerText=`$${(base + ivaAmount).toFixed(2)}`;
-            
             return {sub, fl, ma, iva: ivaAmount, total: base + ivaAmount};
         }
 
@@ -452,8 +489,7 @@
             listaConceptosGlobal=[]; itemActual={materiales:[]};
             ['p_cliente','p_tel','p_ubi','item_desc','inputBusquedaMat'].forEach(i=>document.getElementById(i).value='');
             document.getElementById('mat_cant').value=1; document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0;
-            document.getElementById('chkIva').checked = false; // Reset IVA
-            document.getElementById('chkDesglose').checked = false; // Reset Desglose
+            document.getElementById('chkIva').checked = false; document.getElementById('chkDesglose').checked = false;
             generarFolio(); renderItemMat(); renderListaGlobal(); verCotizador();
         }
         function generarFolio(){DB.config.folioCount++;document.getElementById('p_folio').value=`${DB.config.rol}-${DB.config.folioCount}`;saveLocal();}
@@ -468,13 +504,12 @@
         function verCotizador(){hideAll();document.getElementById('viewCotizador').classList.remove('hidden');}
         function hideAll(){document.querySelectorAll('#adminPanel > div[id^="view"]').forEach(d=>d.classList.add('hidden'));}
 
-        // --- PDF ENGINE (V16.5) CON IVA Y DESGLOSE ---
         async function generarPDFMaster(tipo){
             if(listaConceptosGlobal.length===0) return Swal.fire('Error','Agrega al menos un proyecto a la lista','error');
             const { jsPDF } = window.jspdf; const doc = new jsPDF(); 
-            const cg = calcGlobal(); // Traemos el objeto con IVA
+            const cg = calcGlobal(); 
             const fol = document.getElementById('p_folio').value;
-            const desglose = document.getElementById('chkDesglose').checked; // El Switch determina si se muestran materiales
+            const desglose = document.getElementById('chkDesglose').checked; 
             
             if(DB.config.logoBase64) try{doc.addImage(DB.config.logoBase64,'PNG',10,10,25,25)}catch(e){}
             doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.text(DATOS.nom,40,18);
@@ -493,38 +528,27 @@
                 listaConceptosGlobal.forEach((c,i)=>{
                     doc.setFont("helvetica","bold"); doc.setTextColor(0,51,102); doc.text(`${i+1}. ${c.tipo} (${c.ancho}x${c.alto}m)`,10,y); y+=5;
                     doc.setFont("helvetica","normal"); doc.setTextColor(60); doc.text(c.desc,10,y); y+=5;
-                    
                     if(desglose){
-                        // SI el switch Desglose está activo, mostramos los materiales
                         let rows = c.mats.map(m=>[`  - ${m.n} (x${m.c})`, '']);
                         rows.push(['Mano de Obra y Fabricación', '']);
                         rows.push(['SUBTOTAL CONCEPTO', `$${c.subtotal.toFixed(2)}`]);
                         doc.autoTable({startY:y, body:rows, theme:'plain', styles:{fontSize:9}});
                     } else {
-                        // SI NO, solo el total del concepto
                         doc.autoTable({startY:y,head:[['Descripción','Importe']],body:[['Suministro y Fabricación',`$${c.subtotal.toFixed(2)}`]],theme:'grid',styles:{fontSize:10}});
                     }
                     y=doc.lastAutoTable.finalY+8;
                 });
-                
-                // TOTALES AL FINAL
-                let startX = 140;
-                doc.setFontSize(10); doc.setTextColor(0);
+                let startX = 140; doc.setFontSize(10); doc.setTextColor(0);
                 if(cg.fl>0){doc.text(`Flete: $${cg.fl.toFixed(2)}`,startX,y); y+=5;}
                 if(cg.ma>0){doc.text(`Maniobras: $${cg.ma.toFixed(2)}`,startX,y); y+=5;}
-                if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} // LINEA IVA
-                
+                if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} 
                 doc.setFillColor(0,51,102); doc.rect(130,y,70,10,'F'); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(14);
                 doc.text(`TOTAL: $${cg.total.toFixed(2)}`,195,y+7,{align:'right'});
-                
                 doc.setTextColor(0); doc.setFontSize(8); doc.setFont("helvetica","bold");
-                doc.text("DATOS DE PAGO:", 10, 250);
-                doc.setFont("helvetica","normal");
-                doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta}`, 10, 255);
-                doc.text(`CLABE: ${DATOS.clabe}`, 10, 260);
+                doc.text("DATOS DE PAGO:", 10, 250); doc.setFont("helvetica","normal");
+                doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta}`, 10, 255); doc.text(`CLABE: ${DATOS.clabe}`, 10, 260);
                 if(DB.config.codiBase64){try{doc.text("CODI:",130,250);doc.addImage(DB.config.codiBase64,'PNG',130,252,25,25);}catch(e){}}
             } else {
-                // PDF TALLER (Sin cambios, técnico)
                 listaConceptosGlobal.forEach((c,i)=>{
                     doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5;
                     let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10;
@@ -534,8 +558,21 @@
         }
 
         // STORAGE & CONFIG
-        function saveLocal(){localStorage.setItem('celis_v16',JSON.stringify(DB));}
-        function loadLocal(){const d=localStorage.getItem('celis_v16');if(d)DB=JSON.parse(d);}
+        function saveLocal(){
+            // Guardamos CAT en DB para que los precios nuevos NO se pierdan al cerrar
+            DB.catalogoPersonalizado = CAT;
+            localStorage.setItem('celis_v16',JSON.stringify(DB));
+        }
+        function loadLocal(){
+            const d=localStorage.getItem('celis_v16');
+            if(d){
+                DB=JSON.parse(d);
+                // Si ya guardamos precios personalizados, los usamos
+                if(DB.catalogoPersonalizado && DB.catalogoPersonalizado.length > 0){
+                    CAT = DB.catalogoPersonalizado;
+                }
+            }
+        }
         function abrirConfig(){document.getElementById('modalConfig').classList.remove('hidden');loadUI();}
         function cerrarConfig(){document.getElementById('modalConfig').classList.add('hidden');}
         function loadUI(){document.getElementById('conf_inflacion').value=DB.config.inflacion;document.getElementById('conf_url').value=DB.config.scriptURL||'';
@@ -546,14 +583,8 @@
             DB.config.inflacion=document.getElementById('conf_inflacion').value;
             DB.config.indirectos=document.getElementById('conf_indirectos').value;
             DB.config.scriptURL=document.getElementById('conf_url').value;
-            
-            const processFile = (id, key) => {
-                const f = document.getElementById(id).files[0];
-                if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal();}; r.readAsDataURL(f); }
-            };
-            processFile('conf_logo', 'logoBase64');
-            processFile('conf_codi', 'codiBase64');
-            
+            const processFile = (id, key) => { const f = document.getElementById(id).files[0]; if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal();}; r.readAsDataURL(f); } };
+            processFile('conf_logo', 'logoBase64'); processFile('conf_codi', 'codiBase64');
             setTimeout(()=>{saveLocal(); Swal.fire('Guardado'); cerrarConfig(); checkLogo();}, 500);
         }
         async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB})});Swal.fire('Enviado');}catch(e){Swal.fire('Error',e.message);}}
