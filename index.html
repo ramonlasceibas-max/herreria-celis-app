@@ -490,4 +490,5 @@
         async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB})});Swal.fire('Enviado');}catch(e){Swal.fire('Error',e.message);}}
     </script>
 </body>
+
 </html>
