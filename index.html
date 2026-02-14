@@ -126,11 +126,17 @@
                         <div class="flex justify-between mb-3"><h3 class="text-[#00E5FF] font-bold text-xs uppercase">1. Diseñar Proyecto</h3>
                             <div class="flex gap-2"><button onclick="guardarPlantilla()" class="text-[9px] border border-gray-600 px-2 rounded text-gray-400">Guardar Plantilla</button><button onclick="cargarPlantilla()" class="text-[9px] border border-gray-600 px-2 rounded text-gray-400">Cargar</button></div>
                         </div>
+                        
                         <div class="grid grid-cols-3 gap-2 mb-2">
-                            <select id="item_tipo" class="input-celis text-xs"><option>Portón</option><option>Puerta</option><option>Ventana</option><option>Techumbre</option><option>Barandal</option><option>Estructura</option></select>
+                            <div class="flex gap-1">
+                                <select id="item_tipo" class="input-celis text-xs w-full rounded-r-none">
+                                    </select>
+                                <button onclick="nuevoTipoTrabajo()" class="btn-neon px-2 text-[10px] text-green-500 border-green-500 hover:bg-green-900 rounded-l-none border-l-0" title="Nuevo Tipo">+</button>
+                            </div>
                             <input type="number" id="item_ancho" class="input-celis text-xs text-center" placeholder="Ancho (m)">
                             <input type="number" id="item_alto" class="input-celis text-xs text-center" placeholder="Alto (m)">
                         </div>
+
                         <textarea id="item_desc" class="input-celis mb-3 text-xs" rows="2" placeholder="Detalles del diseño..."></textarea>
                         
                         <div class="bg-black p-3 rounded mb-3 border border-gray-800">
@@ -233,13 +239,13 @@
     </div>
 
     <script>
-        let DB={config:{inflacion:0,indirectos:10,rol:'A',folioCount:1000,scriptURL:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[]};
+        let DB={config:{inflacion:0,indirectos:10,rol:'A',folioCount:1000,scriptURL:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[], tipos:[]};
         let listaConceptosGlobal=[], itemActual={materiales:[]};
         // DATOS FIJOS
         const DATOS={nom:"HERRERÍA CELIS",slogan:"ARQUITECTURA Y FUERZA EN ACERO",dir:"Carretera Zapata-Tezoyuca km 3.5, Emiliano Zapata, Morelos",tel:"777 220 0288",wa:"56 4582 6729",rfc:"XAXX010101000",banco:"BBVA",cuenta:"XXXX-XXXX-XXXX",clabe:"XXXXXXXXXXXXXXXXXX"};
         let CAT=[{n:"PTR 4x4 Verde",p:1200},{n:"PTR 2x2 Verde",p:600},{n:"PTR 1x1 C-14",p:350},{n:"Ángulo 1/8 x 1 1/2",p:350},{n:"Solera 3/16 x 2",p:280},{n:"Lámina Cal 18",p:1500},{n:"Riel 1500",p:800},{n:"Carretillas",p:150},{n:"Bisagra Tubular",p:45},{n:"Chapa Residential",p:450},{n:"Electrodo Kg",p:85},{n:"Primer Lt",p:180},{n:"Esmalte Lt",p:220},{n:"Thinner",p:40},{n:"Disco Corte",p:25},{n:"Gasolina Lt",p:25}];
 
-        window.onload=()=>{loadLocal();renderCat();renderHistorial();checkLogo();};
+        window.onload=()=>{loadLocal();renderCat();renderTipos();renderHistorial();checkLogo();};
 
         // CORE
         let cc=0; function intentarAdmin(){cc++;if(cc===3){cc=0;Swal.fire({title:'Admin',input:'password',background:'#000',color:'#fff',confirmButtonColor:'#00E5FF',preConfirm:p=>p==='admin123'}).then(r=>{if(r.isConfirmed){document.getElementById('landingPage').classList.add('hidden');document.getElementById('adminPanel').classList.remove('hidden');updateDashboard();checkLogo();}})}}
@@ -263,7 +269,8 @@
         function cerrarCotizadorCliente(){document.getElementById('modalCliente').classList.add('hidden');}
         function nextStep(s){document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden'));document.getElementById(`step${s}`).classList.remove('hidden');document.getElementById('stepCount').innerText=s;}
         function toggleFacturaCliente(){document.getElementById('boxFacturaCliente').classList.toggle('hidden',!document.getElementById('chkFactura').checked);}
-      function enviarWhatsAppCliente(){
+        
+        function enviarWhatsAppCliente(){
             // 1. Recolectar datos
             const n = document.getElementById('cli_nombre').value;
             const u = document.getElementById('cli_ubi').value || "Ubicación pendiente";
@@ -318,6 +325,38 @@
                     CAT.push({n: nombre, p: precio});
                     renderCat();
                     document.getElementById('inputBusquedaMat').value = nombre;
+                    Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false});
+                }
+            });
+        }
+
+        // --- GESTIÓN DE TIPOS DE TRABAJO ---
+        function renderTipos(){
+            // 1. Si no existen tipos guardados, usamos los básicos
+            if(!DB.tipos || DB.tipos.length === 0) {
+                DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura", "Escalera", "Reparación", "Soldadura Gral."];
+            }
+            // 2. Llenar el Select
+            const select = document.getElementById('item_tipo');
+            select.innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join('');
+        }
+
+        function nuevoTipoTrabajo(){
+            Swal.fire({
+                title: 'Nuevo Tipo de Trabajo',
+                input: 'text',
+                inputPlaceholder: 'Ej: Soldadura a Domicilio',
+                background: '#000', color: '#fff', confirmButtonColor: '#00E5FF',
+                showCancelButton: true
+            }).then((result) => {
+                if (result.isConfirmed && result.value) {
+                    // Agregamos a la lista y guardamos
+                    DB.tipos.push(result.value);
+                    saveLocal(); // Guardar en memoria del cel
+                    renderTipos(); // Actualizar lista visual
+                    
+                    // Seleccionar el nuevo automáticamente
+                    document.getElementById('item_tipo').value = result.value;
                     Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false});
                 }
             });
@@ -520,6 +559,4 @@
         async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB})});Swal.fire('Enviado');}catch(e){Swal.fire('Error',e.message);}}
     </script>
 </body>
-
 </html>
-
