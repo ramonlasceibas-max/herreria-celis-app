@@ -3,8 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herrería Celis | System V17.0 Master</title>
+    <title>Herrería Celis | System V17.0 PWA</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00E5FF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2504/2504936.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -15,20 +21,14 @@
         /* ESTILO DARK NEON LUXURY */
         :root { --bg: #050505; --glass: rgba(20, 20, 20, 0.95); --neon: #00E5FF; }
         body { background-color: var(--bg); color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
-        
-        /* CANVAS CHISPAS */
         #sparksCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-
         .glass-card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; }
         .input-celis { background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; width: 100%; font-size: 13px; transition: 0.3s; }
         .input-celis:focus { border-color: var(--neon); outline: none; box-shadow: 0 0 10px rgba(0,229,255,0.2); }
-
         .btn-neon { border: 1px solid var(--neon); color: var(--neon); padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-neon:hover { background: var(--neon); color: #000; box-shadow: 0 0 10px rgba(0,229,255,0.4); }
         .btn-primary { background: var(--neon); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0,229,255,0.4); }
-        
-        /* Utilidades */
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
@@ -36,10 +36,18 @@
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked { background: var(--neon); }
         .toggle-switch:checked::after { transform: translateX(20px); background: #000; }
-        
-        /* Animación Tarjetas Dashboard */
         .card-hover:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); border-color: var(--neon); cursor: pointer; }
     </style>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('App Instalable Lista: ', reg.scope))
+                    .catch(err => console.log('Fallo SW: ', err));
+            });
+        }
+    </script>
 </head>
 <body>
     <canvas id="sparksCanvas"></canvas>
@@ -70,7 +78,7 @@
         <div class="flex justify-between items-center mb-4 glass-card p-3 sticky top-0 z-40 bg-black/90">
             <div class="flex items-center gap-2 cursor-pointer" onclick="salirAdmin()">
                 <div class="w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center text-black font-bold">HC</div>
-                <div><h2 class="text-white font-bold text-sm">V17.0 MASTER</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
+                <div><h2 class="text-white font-bold text-sm">V17.0 APP</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
             </div>
             <div class="flex gap-2">
                 <button onclick="sincronizarNube()" class="btn-neon px-2 text-xs" title="Respaldo Drive"><i class="fas fa-cloud"></i></button>
@@ -126,7 +134,6 @@
                         <div class="flex justify-between mb-3"><h3 class="text-[#00E5FF] font-bold text-xs uppercase">1. Diseñar Proyecto</h3>
                             <div class="flex gap-2"><button onclick="guardarPlantilla()" class="text-[9px] border border-gray-600 px-2 rounded text-gray-400">Guardar Plantilla</button><button onclick="cargarPlantilla()" class="text-[9px] border border-gray-600 px-2 rounded text-gray-400">Cargar</button></div>
                         </div>
-                        
                         <div class="grid grid-cols-3 gap-2 mb-2">
                             <div class="flex gap-1">
                                 <select id="item_tipo" class="input-celis text-xs w-full rounded-r-none"></select>
@@ -142,7 +149,6 @@
                                 <label class="text-[10px] text-gray-500 uppercase">Materiales</label>
                                 <span class="text-xs font-bold text-green-400">Costo Material: <span id="lblMonitorMateriales">$0.00</span></span>
                             </div>
-                            
                             <div class="flex gap-2 mb-2">
                                 <input list="listaMateriales" id="inputBusquedaMat" class="input-celis text-xs w-full" placeholder="Buscar material...">
                                 <datalist id="listaMateriales"></datalist>
@@ -252,13 +258,11 @@
             </div>
             <label class="text-xs text-gray-400">Material</label>
             <input id="opt_material" class="input-celis mb-4" placeholder="Ej: P-150">
-            
             <div id="opt_resultado" class="hidden p-3 bg-gray-900 rounded mb-4 text-xs">
                 <p class="text-white">Perímetro Total: <span id="opt_res_m" class="text-[#00E5FF] font-bold">0m</span></p>
                 <p class="text-white">Tramos (6m): <span id="opt_res_tramos" class="text-yellow-500 font-bold text-lg">0</span></p>
                 <p class="text-gray-500 italic" id="opt_res_sobra">Sobra: 0m</p>
             </div>
-
             <button onclick="calcularOptimizacion()" class="btn-neon w-full mb-2 border-purple-500 text-purple-500">CALCULAR</button>
             <button onclick="agregarOptimizado()" class="btn-primary w-full hidden" id="btnAddOpt">AGREGAR A LISTA</button>
             <button onclick="document.getElementById('modalOptimizador').classList.add('hidden')" class="text-gray-500 text-xs w-full mt-2">Cerrar</button>
@@ -305,10 +309,7 @@
         const DATOS={nom:"HERRERÍA CELIS",slogan:"ARQUITECTURA Y FUERZA EN ACERO",dir:"Carretera Zapata-Tezoyuca km 3.5, Emiliano Zapata, Morelos",tel:"777 220 0288",wa:"56 4582 6729",rfc:"XAXX010101000",banco:"BBVA",cuenta:"XXXX-XXXX-XXXX",clabe:"XXXXXXXXXXXXXXXXXX"};
         let CAT=[{n:"PTR 4x4 Verde",p:1200},{n:"PTR 2x2 Verde",p:600},{n:"PTR 1x1 C-14",p:350},{n:"Ángulo 1/8 x 1 1/2",p:350},{n:"Solera 3/16 x 2",p:280},{n:"Lámina Cal 18",p:1500},{n:"Riel 1500",p:800},{n:"Carretillas",p:150},{n:"Bisagra Tubular",p:45},{n:"Chapa Residential",p:450},{n:"Electrodo Kg",p:85},{n:"Primer Lt",p:180},{n:"Esmalte Lt",p:220},{n:"Thinner",p:40},{n:"Disco Corte",p:25},{n:"Gasolina Lt",p:25}];
 
-        // INIT & CHISPAS
-        window.onload=()=>{
-            loadLocal();renderCat();renderTipos();renderHistorial();checkLogo();initSparks();
-        };
+        window.onload=()=>{ loadLocal();renderCat();renderTipos();renderHistorial();checkLogo();initSparks(); };
 
         function initSparks() {
             const c=document.getElementById('sparksCanvas'), x=c.getContext('2d');
@@ -318,59 +319,35 @@
             function a(){x.clearRect(0,0,w,h);p.forEach(z=>{z.update();z.draw();});requestAnimationFrame(a);} a();
         }
 
-        // --- OPTIMIZADOR DE CORTES (NUEVO) ---
+        // --- OPTIMIZADOR ---
         function abrirOptimizador(){document.getElementById('modalOptimizador').classList.remove('hidden');}
         function calcularOptimizacion(){
-            const h = parseFloat(document.getElementById('opt_alto').value)||0;
-            const w = parseFloat(document.getElementById('opt_ancho').value)||0;
+            const h = parseFloat(document.getElementById('opt_alto').value)||0; const w = parseFloat(document.getElementById('opt_ancho').value)||0;
             if(h===0 || w===0) return;
-            
-            // Perímetro: 2 altos + 2 anchos (básico marco)
-            const perimetro = (h*2) + (w*2);
-            const tramoStd = 6.0;
-            const tramos = Math.ceil(perimetro / tramoStd);
-            const sobrante = (tramos * tramoStd) - perimetro;
-
-            document.getElementById('opt_res_m').innerText = perimetro.toFixed(2) + 'm';
-            document.getElementById('opt_res_tramos').innerText = tramos;
-            document.getElementById('opt_res_sobra').innerText = `Sobran: ${sobrante.toFixed(2)}m (Retacería)`;
-            document.getElementById('opt_resultado').classList.remove('hidden');
-            document.getElementById('btnAddOpt').classList.remove('hidden');
+            const perimetro = (h*2) + (w*2); const tramoStd = 6.0; const tramos = Math.ceil(perimetro / tramoStd); const sobrante = (tramos * tramoStd) - perimetro;
+            document.getElementById('opt_res_m').innerText = perimetro.toFixed(2) + 'm'; document.getElementById('opt_res_tramos').innerText = tramos; document.getElementById('opt_res_sobra').innerText = `Sobran: ${sobrante.toFixed(2)}m (Retacería)`;
+            document.getElementById('opt_resultado').classList.remove('hidden'); document.getElementById('btnAddOpt').classList.remove('hidden');
         }
         function agregarOptimizado(){
-            const mat = document.getElementById('opt_material').value || "Perfil Estructura";
-            const tramos = parseFloat(document.getElementById('opt_res_tramos').innerText);
-            
-            // Buscar precio si existe
-            let precio = 0;
-            const matObj = CAT.find(x => x.n.toLowerCase().includes(mat.toLowerCase()));
-            if(matObj) precio = matObj.p;
-            else {
-                Swal.fire('Material nuevo', 'Define el precio unitario de: '+mat, 'question').then(()=>{});
-                // Si no existe, lo mete con precio 0 para que lo edites
-            }
-
-            itemActual.materiales.push({n: mat + " (Tramos 6m)", p: precio, c: tramos});
-            renderItemMat();
-            document.getElementById('modalOptimizador').classList.add('hidden');
-            Swal.fire({toast:true, icon:'success', title:'Agregado a la lista', position:'top-end', showConfirmButton:false, timer:1500});
+            const mat = document.getElementById('opt_material').value || "Perfil Estructura"; const tramos = parseFloat(document.getElementById('opt_res_tramos').innerText);
+            let precio = 0; const matObj = CAT.find(x => x.n.toLowerCase().includes(mat.toLowerCase()));
+            if(matObj) precio = matObj.p; else Swal.fire('Material nuevo', 'Define el precio unitario de: '+mat, 'question').then(()=>{});
+            itemActual.materiales.push({n: mat + " (Tramos 6m)", p: precio, c: tramos}); renderItemMat();
+            document.getElementById('modalOptimizador').classList.add('hidden'); Swal.fire({toast:true, icon:'success', title:'Agregado a la lista', position:'top-end', showConfirmButton:false, timer:1500});
         }
 
-        // CORE & NAV
+        // --- CORE ---
         let cc=0; function intentarAdmin(){cc++;if(cc===3){cc=0;Swal.fire({title:'Admin',input:'password',background:'#000',color:'#fff',confirmButtonColor:'#00E5FF',preConfirm:p=>p==='admin123'}).then(r=>{if(r.isConfirmed){document.getElementById('landingPage').classList.add('hidden');document.getElementById('adminPanel').classList.remove('hidden');updateDashboard();checkLogo();}})}}
         function salirAdmin(){document.getElementById('adminPanel').classList.add('hidden');document.getElementById('landingPage').classList.remove('hidden');}
         function checkLogo(){ if(DB.config.logoBase64 && DB.config.logoBase64.length>50){ document.getElementById('defaultIcon').classList.add('hidden'); document.getElementById('landingLogoImg').src=DB.config.logoBase64; document.getElementById('landingLogoImg').classList.remove('hidden'); } }
 
-        // CLIENTE FAST
         function abrirCotizadorCliente(){document.getElementById('modalCliente').classList.remove('hidden');nextStep(1);}
         function cerrarCotizadorCliente(){document.getElementById('modalCliente').classList.add('hidden');}
         function nextStep(s){document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden'));document.getElementById(`step${s}`).classList.remove('hidden');}
         function enviarWhatsAppCliente(){ const n = document.getElementById('cli_nombre').value; const m = `👋 Hola Herrería Celis, soy *${n}*. Interés: ${document.getElementById('cli_tipo').value}. ${document.getElementById('cli_detalles').value}`; window.location.href = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`; setTimeout(cerrarCotizadorCliente, 1000); }
 
-        // LOGICA DE COTIZACIÓN
         function renderCat(){document.getElementById('listaMateriales').innerHTML=CAT.map(m=>`<option value="${m.n}">$${m.p}</option>`).join('');}
         function crearMaterial(){ Swal.fire({ title: 'Nuevo Material', html: '<input id="swal-input1" class="swal2-input" placeholder="Nombre">' + '<input id="swal-input2" class="swal2-input" placeholder="Precio" type="number">', focusConfirm: false, background: '#000', color: '#fff', confirmButtonColor:'#00E5FF', preConfirm: () => { return [document.getElementById('swal-input1').value, document.getElementById('swal-input2').value] } }).then((result) => { if(result.value && result.value[0] && result.value[1]){ const nombre = result.value[0]; const precio = parseFloat(result.value[1]); CAT.push({n: nombre, p: precio}); saveLocal(); renderCat(); document.getElementById('inputBusquedaMat').value = nombre; Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false}); } }); }
-
         function abrirGestorPrecios(){ document.getElementById('modalPrecios').classList.remove('hidden'); document.getElementById('searchGestor').value = ''; renderGestor(); }
         function renderGestor(){ const txt = document.getElementById('searchGestor').value.toLowerCase(); const lista = document.getElementById('listaGestorPrecios'); const filtrados = CAT.filter(m => m.n.toLowerCase().includes(txt)); lista.innerHTML = filtrados.map((m, i) => { const realIndex = CAT.indexOf(m); return ` <tr class="border-b border-gray-800 hover:bg-gray-800/50"> <td class="p-2">${m.n}</td> <td class="p-2 text-right font-bold text-green-400">$${m.p}</td> <td class="p-2 text-right"> <button onclick="editarPrecioMat(${realIndex})" class="text-yellow-500 mr-2">✏️</button> <button onclick="borrarMaterial(${realIndex})" class="text-red-500">🗑️</button> </td> </tr>`; }).join(''); }
         function editarPrecioMat(index){ const mat = CAT[index]; Swal.fire({ title: `Editar: ${mat.n}`, html: `<label class="block text-left text-xs text-gray-400">Nuevo Precio:</label> <input id="newPrice" type="number" class="swal2-input" value="${mat.p}">`, background: '#000', color: '#fff', confirmButtonColor: '#Eab308', preConfirm: () => { return document.getElementById('newPrice').value } }).then((result) => { if(result.isConfirmed){ CAT[index].p = parseFloat(result.value); saveLocal(); renderCat(); renderGestor(); } }); }
@@ -378,153 +355,44 @@
 
         function renderTipos(){ if(!DB.tipos || DB.tipos.length === 0) DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura"]; document.getElementById('item_tipo').innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join(''); }
         function nuevoTipoTrabajo(){ Swal.fire({title: 'Nuevo Tipo', input: 'text', background: '#000', color: '#fff', confirmButtonColor: '#00E5FF'}).then((r) => { if (r.value) { DB.tipos.push(r.value); saveLocal(); renderTipos(); document.getElementById('item_tipo').value = r.value; } }); }
-
+        
         function addMaterialToItem(){ const v=document.getElementById('inputBusquedaMat').value, m=CAT.find(x=>x.n===v); if(!m) return Swal.fire('Error','Material no encontrado. Usa [+ Nuevo]','warning'); itemActual.materiales.push({n:m.n,p:m.p,c:parseFloat(document.getElementById('mat_cant').value)||1}); document.getElementById('inputBusquedaMat').value=''; renderItemMat(); }
         function renderItemMat(){ let t=0; document.getElementById('listaMaterialesTemp').innerHTML=itemActual.materiales.map((m,i)=>{ t+=m.p*m.c; return `<tr class="border-b border-gray-800"><td class="py-1">${m.c}</td><td>${m.n}</td><td class="text-right">$${(m.p*m.c).toFixed(0)}</td><td class="text-right text-red-500 cursor-pointer" onclick="delItemMat(${i})">x</td></tr>` }).join(''); document.getElementById('lblMonitorMateriales').innerText = `$${t.toFixed(2)}`; }
         function delItemMat(i){itemActual.materiales.splice(i,1);renderItemMat();}
-        
         function agregarConceptoALista(){ const mo = parseFloat(document.getElementById('item_mo').value)||0; if(itemActual.materiales.length===0 && mo === 0) return Swal.fire('Vacío','Agrega materiales','warning'); let cMat=itemActual.materiales.reduce((s,m)=>s+(m.p*m.c),0); const inf=parseFloat(DB.config.inflacion)||0, ind=parseFloat(DB.config.indirectos)||0; const cFinal = cMat*(1+inf/100)*(1+ind/100); const fac=(parseFloat(document.getElementById('item_dif').value)||1); const inst=parseFloat(document.getElementById('item_inst').value)||0; listaConceptosGlobal.push({ tipo:document.getElementById('item_tipo').value, ancho:document.getElementById('item_ancho').value, alto:document.getElementById('item_alto').value, desc:document.getElementById('item_desc').value, mats:[...itemActual.materiales], subtotal: cFinal+(mo*fac)+inst }); itemActual.materiales=[]; document.getElementById('item_desc').value=''; document.getElementById('item_mo').value=0; document.getElementById('item_inst').value=0; renderItemMat(); renderListaGlobal(); Swal.fire({toast:true, position:'top-end', icon:'success', title:'Proyecto Agregado', timer:1000, showConfirmButton:false}); }
         function renderListaGlobal(){ const c=document.getElementById('listaConceptosGlobal'); if(listaConceptosGlobal.length===0){c.innerHTML='<div class="text-center text-gray-700 text-xs py-10 italic">Aún no agregas proyectos.</div>';calcGlobal();return;} c.innerHTML=listaConceptosGlobal.map((x,i)=>` <div class="glass-card p-2 border-l-2 border-[#00E5FF] relative group mb-2"> <button onclick="borrarC(${i})" class="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 font-bold">x</button> <h4 class="text-white text-xs font-bold">${i+1}. ${x.tipo} (${x.ancho}x${x.alto}m)</h4> <div class="flex justify-between mt-1 text-[10px]"> <span class="text-gray-500 w-32 truncate">${x.desc}</span> <span class="text-[#00E5FF] font-bold">$${x.subtotal.toFixed(2)}</span> </div> </div>`).join(''); calcGlobal(); }
         function borrarC(i){listaConceptosGlobal.splice(i,1);renderListaGlobal();}
 
-        // CALCULO GLOBAL CON UTILIDAD
         function calcGlobal(){ 
             let sub = listaConceptosGlobal.reduce((s,x)=>s+x.subtotal,0); 
-            const fl = parseFloat(document.getElementById('global_flete').value)||0; 
-            const ma = parseFloat(document.getElementById('global_mani').value)||0; 
-            const desc = parseFloat(document.getElementById('global_desc').value)||0; 
-            const cobrarIva = document.getElementById('chkIva').checked; 
+            const fl = parseFloat(document.getElementById('global_flete').value)||0; const ma = parseFloat(document.getElementById('global_mani').value)||0; const desc = parseFloat(document.getElementById('global_desc').value)||0; const cobrarIva = document.getElementById('chkIva').checked; 
             let base = (sub + fl + ma) - desc; if(base < 0) base = 0;
             let ivaAmount = cobrarIva ? base * 0.16 : 0; 
-            
             document.getElementById('rowIvaDisplay').classList.toggle('hidden', !cobrarIva); 
             document.getElementById('lblGlobalSub').innerText=`$${sub.toFixed(2)}`; 
             document.getElementById('lblGlobalIva').innerText=`$${ivaAmount.toFixed(2)}`; 
             document.getElementById('lblGlobalTotal').innerText=`$${(base + ivaAmount).toFixed(2)}`; 
-            
-            // Calculo de Utilidad (Aprox 25% del subtotal si se configuró bien)
-            // Esto es una estimación basada en que el subtotal ya tiene inflacion e indirectos
-            const costoPuro = sub / (1 + (parseFloat(DB.config.indirectos)/100)); 
-            const utilidad = base - costoPuro;
+            const costoPuro = sub / (1 + (parseFloat(DB.config.indirectos)/100)); const utilidad = base - costoPuro;
             document.getElementById('lblUtilidad').innerText = `Utilidad aprox: $${utilidad.toFixed(2)}`;
-
             return {sub, fl, ma, desc, iva: ivaAmount, total: base + ivaAmount}; 
         }
 
-        function nuevoPedidoFull(){
-            listaConceptosGlobal=[]; itemActual={materiales:[]};
-            ['p_cliente','p_tel','p_ubi','item_desc','inputBusquedaMat'].forEach(i=>document.getElementById(i).value='');
-            document.getElementById('mat_cant').value=1; document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0; document.getElementById('global_desc').value=0;
-            document.getElementById('chkIva').checked = false; document.getElementById('chkDesglose').checked = false;
-            generarFolio(); renderItemMat(); renderListaGlobal(); verCotizador();
-        }
+        function nuevoPedidoFull(){ listaConceptosGlobal=[]; itemActual={materiales:[]}; ['p_cliente','p_tel','p_ubi','item_desc','inputBusquedaMat'].forEach(i=>document.getElementById(i).value=''); document.getElementById('mat_cant').value=1; document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0; document.getElementById('global_desc').value=0; document.getElementById('chkIva').checked = false; document.getElementById('chkDesglose').checked = false; generarFolio(); renderItemMat(); renderListaGlobal(); verCotizador(); }
         function generarFolio(){DB.config.folioCount++;document.getElementById('p_folio').value=`${DB.config.rol}-${DB.config.folioCount}`;saveLocal();}
+        function guardarPresupuestoGlobal(){ const folio = document.getElementById('p_folio').value; DB.proyectos = DB.proyectos.filter(p => p.folio !== folio); DB.proyectos.push({ folio: folio, cliente: document.getElementById('p_cliente').value, tel: document.getElementById('p_tel').value, ubi: document.getElementById('p_ubi').value, total: document.getElementById('lblGlobalTotal').innerText, estado: 'Pendiente', conceptos: [...listaConceptosGlobal], flete: document.getElementById('global_flete').value, mani: document.getElementById('global_mani').value, desc: document.getElementById('global_desc').value, iva: document.getElementById('chkIva').checked, desglose: document.getElementById('chkDesglose').checked, fecha: new Date().toLocaleDateString() }); saveLocal(); Swal.fire({title:'Guardado',text:'Puedes recuperarlo en el historial',icon:'success',confirmButtonColor:'#00E5FF'}); verDashboard(); }
+        function cargarProyecto(folio, duplicar = false){ const p = DB.proyectos.find(x => x.folio === folio); if(!p) return; nuevoPedidoFull(); if(duplicar) Swal.fire({toast:true, icon:'success', title:'Proyecto Duplicado', position:'top-end'}); else { document.getElementById('p_folio').value = p.folio; let numFolio = parseInt(p.folio.split('-')[1]); if(numFolio) DB.config.folioCount = numFolio - 1; Swal.fire({toast:true, icon:'info', title:'Editando: ' + folio, position:'top-end'}); } document.getElementById('p_cliente').value = p.cliente || ''; document.getElementById('p_tel').value = p.tel || ''; document.getElementById('p_ubi').value = p.ubi || ''; if(p.conceptos) listaConceptosGlobal = JSON.parse(JSON.stringify(p.conceptos)); document.getElementById('global_flete').value = p.flete || 0; document.getElementById('global_mani').value = p.mani || 0; document.getElementById('global_desc').value = p.desc || 0; document.getElementById('chkIva').checked = p.iva || false; document.getElementById('chkDesglose').checked = p.desglose || false; renderListaGlobal(); verCotizador(); }
         
-        function guardarPresupuestoGlobal(){
-            const folio = document.getElementById('p_folio').value;
-            DB.proyectos = DB.proyectos.filter(p => p.folio !== folio);
-            DB.proyectos.push({
-                folio: folio,
-                cliente: document.getElementById('p_cliente').value,
-                tel: document.getElementById('p_tel').value,
-                ubi: document.getElementById('p_ubi').value,
-                total: document.getElementById('lblGlobalTotal').innerText,
-                estado: 'Pendiente',
-                conceptos: [...listaConceptosGlobal],
-                flete: document.getElementById('global_flete').value,
-                mani: document.getElementById('global_mani').value,
-                desc: document.getElementById('global_desc').value,
-                iva: document.getElementById('chkIva').checked,
-                desglose: document.getElementById('chkDesglose').checked,
-                fecha: new Date().toLocaleDateString()
-            });
-            saveLocal();
-            Swal.fire({title:'Guardado',text:'Puedes recuperarlo en el historial',icon:'success',confirmButtonColor:'#00E5FF'});
-            verDashboard();
-        }
-
-        // CARGAR PROYECTO (FIXED) + DUPLICAR
-        function cargarProyecto(folio, duplicar = false){
-            const p = DB.proyectos.find(x => x.folio === folio);
-            if(!p) return;
-            nuevoPedidoFull(); // Reset
-            
-            if(duplicar) {
-                // Generar NUEVO folio, no usar el viejo
-                // p_folio ya se generó en nuevoPedidoFull
-                Swal.fire({toast:true, icon:'success', title:'Proyecto Duplicado', position:'top-end'});
-            } else {
-                // Usar folio original
-                document.getElementById('p_folio').value = p.folio;
-                let numFolio = parseInt(p.folio.split('-')[1]); if(numFolio) DB.config.folioCount = numFolio - 1; 
-                Swal.fire({toast:true, icon:'info', title:'Editando: ' + folio, position:'top-end'});
-            }
-
-            document.getElementById('p_cliente').value = p.cliente || '';
-            document.getElementById('p_tel').value = p.tel || '';
-            document.getElementById('p_ubi').value = p.ubi || '';
-            
-            if(p.conceptos) listaConceptosGlobal = JSON.parse(JSON.stringify(p.conceptos)); // Deep copy
-            document.getElementById('global_flete').value = p.flete || 0;
-            document.getElementById('global_mani').value = p.mani || 0;
-            document.getElementById('global_desc').value = p.desc || 0;
-            document.getElementById('chkIva').checked = p.iva || false;
-            document.getElementById('chkDesglose').checked = p.desglose || false;
-
-            renderListaGlobal();
-            verCotizador(); 
-        }
-
-        function calcularListaCompra() {
-            if(listaConceptosGlobal.length === 0) return Swal.fire('Sin datos', 'Agrega conceptos primero', 'warning');
-            let resumen = {};
-            listaConceptosGlobal.forEach(c => { c.mats.forEach(m => { if(!resumen[m.n]) resumen[m.n] = 0; resumen[m.n] += m.c; }); });
-            let htmlTabla = '<table class="w-full text-left text-sm text-gray-300 border-collapse"><tr class="border-b border-gray-600"><th class="py-2">Material</th><th class="py-2 text-right">Total</th></tr>';
-            for (const [nombre, cantidad] of Object.entries(resumen)) { htmlTabla += `<tr class="border-b border-gray-800"><td class="py-2">${nombre}</td><td class="py-2 text-right font-bold text-[#00E5FF]">${cantidad}</td></tr>`; }
-            htmlTabla += '</table>';
-            Swal.fire({ title: '📋 Lista de Compra', html: htmlTabla, background: '#000', color: '#fff', confirmButtonColor: '#00E5FF' });
-        }
+        function calcularListaCompra() { if(listaConceptosGlobal.length === 0) return Swal.fire('Sin datos', 'Agrega conceptos primero', 'warning'); let resumen = {}; listaConceptosGlobal.forEach(c => { c.mats.forEach(m => { if(!resumen[m.n]) resumen[m.n] = 0; resumen[m.n] += m.c; }); }); let htmlTabla = '<table class="w-full text-left text-sm text-gray-300 border-collapse"><tr class="border-b border-gray-600"><th class="py-2">Material</th><th class="py-2 text-right">Total</th></tr>'; for (const [nombre, cantidad] of Object.entries(resumen)) { htmlTabla += `<tr class="border-b border-gray-800"><td class="py-2">${nombre}</td><td class="py-2 text-right font-bold text-[#00E5FF]">${cantidad}</td></tr>`; } htmlTabla += '</table>'; Swal.fire({ title: '📋 Lista de Compra', html: htmlTabla, background: '#000', color: '#fff', confirmButtonColor: '#00E5FF' }); }
 
         function updateDashboard(filtro = null){
-            let totalVentas = 0;
-            let pendientes = 0;
-            DB.proyectos.forEach(p => {
-                if(p.estado === 'Vendido') totalVentas += parseFloat(p.total.replace('$','').replace(',',''));
-                if(p.estado === 'Pendiente') pendientes++;
-            });
-            document.getElementById('statVentas').innerText = `$${totalVentas.toLocaleString('es-MX')}`;
-            document.getElementById('statPend').innerText = pendientes;
-
-            // FILTRO DE TARJETAS
-            let lista = DB.proyectos.slice().reverse();
-            if(filtro) lista = lista.filter(p => p.estado === filtro);
-
-            const tabla = document.getElementById('tablaHistorial');
-            tabla.innerHTML = lista.map(p => {
-                let colorEstado = 'text-yellow-500';
-                if(p.estado === 'Vendido') colorEstado = 'text-green-500';
-                if(p.estado === 'Cancelado') colorEstado = 'text-red-500';
-                
-                // Renglón clickeable para abrir directo
-                return `
-                <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer group">
-                    <td class="p-2 text-[#00E5FF] font-bold" onclick="cargarProyecto('${p.folio}')">${p.folio}</td>
-                    <td class="p-2 truncate max-w-[100px]" onclick="cargarProyecto('${p.folio}')">${p.cliente}</td>
-                    <td class="p-2" onclick="cargarProyecto('${p.folio}')">${p.total}</td>
-                    <td class="p-2 ${colorEstado} font-bold text-[10px] uppercase" onclick="cargarProyecto('${p.folio}')">${p.estado}</td>
-                    <td class="p-2 text-right flex gap-2 justify-end">
-                        <button onclick="cargarProyecto('${p.folio}', true)" title="Clonar" class="text-purple-400 hover:scale-125 transition">👯</button>
-                        <button onclick="cambiarEstado('${p.folio}','Vendido')" title="Vendido" class="text-green-500 hover:scale-125 transition">✅</button>
-                        <button onclick="cambiarEstado('${p.folio}','Cancelado')" title="Cancelar" class="text-red-500 hover:scale-125 transition">❌</button>
-                        <button onclick="delHist('${p.folio}')" title="Borrar" class="text-gray-500 hover:text-white transition">🗑️</button>
-                    </td>
-                </tr>`;
-            }).join('');
+            let totalVentas = 0; let pendientes = 0;
+            DB.proyectos.forEach(p => { if(p.estado === 'Vendido') totalVentas += parseFloat(p.total.replace('$','').replace(',','')); if(p.estado === 'Pendiente') pendientes++; });
+            document.getElementById('statVentas').innerText = `$${totalVentas.toLocaleString('es-MX')}`; document.getElementById('statPend').innerText = pendientes;
+            let lista = DB.proyectos.slice().reverse(); if(filtro) lista = lista.filter(p => p.estado === filtro);
+            document.getElementById('tablaHistorial').innerHTML = lista.map(p => { let colorEstado = 'text-yellow-500'; if(p.estado === 'Vendido') colorEstado = 'text-green-500'; if(p.estado === 'Cancelado') colorEstado = 'text-red-500'; return ` <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer group"> <td class="p-2 text-[#00E5FF] font-bold" onclick="cargarProyecto('${p.folio}')">${p.folio}</td> <td class="p-2 truncate max-w-[100px]" onclick="cargarProyecto('${p.folio}')">${p.cliente}</td> <td class="p-2" onclick="cargarProyecto('${p.folio}')">${p.total}</td> <td class="p-2 ${colorEstado} font-bold text-[10px] uppercase" onclick="cargarProyecto('${p.folio}')">${p.estado}</td> <td class="p-2 text-right flex gap-2 justify-end"> <button onclick="cargarProyecto('${p.folio}', true)" title="Clonar" class="text-purple-400 hover:scale-125 transition">👯</button> <button onclick="cambiarEstado('${p.folio}','Vendido')" title="Vendido" class="text-green-500 hover:scale-125 transition">✅</button> <button onclick="cambiarEstado('${p.folio}','Cancelado')" title="Cancelar" class="text-red-500 hover:scale-125 transition">❌</button> <button onclick="delHist('${p.folio}')" title="Borrar" class="text-gray-500 hover:text-white transition">🗑️</button> </td> </tr>`; }).join('');
         }
-        
         function filtrarHistorial(estado) { updateDashboard(estado); Swal.fire({toast:true, title:'Filtrando: '+estado, icon:'info', position:'top-end', timer:1000, showConfirmButton:false}); }
-        function renderHistorial() { updateDashboard(); } // Reset filtro
-
+        function renderHistorial() { updateDashboard(); }
         function cambiarEstado(folio, nuevoEstado){ const p = DB.proyectos.find(x => x.folio === folio); if(p){ p.estado = nuevoEstado; saveLocal(); updateDashboard(); Swal.fire({toast:true, position:'top-end', icon:'success', title:`Marcado como ${nuevoEstado}`, timer:1500, showConfirmButton:false}); } }
         function delHist(f){ Swal.fire({title:'¿Borrar?',text:'No se podrá recuperar',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',background:'#000',color:'#fff'}).then(r=>{ if(r.isConfirmed){ DB.proyectos = DB.proyectos.filter(p => p.folio !== f); saveLocal(); updateDashboard(); } }); }
         
@@ -539,6 +407,7 @@
         function cerrarConfig(){document.getElementById('modalConfig').classList.add('hidden');}
         function loadUI(){document.getElementById('conf_inflacion').value=DB.config.inflacion;document.getElementById('conf_url').value=DB.config.scriptURL||''; document.getElementById('conf_drive').value=DB.config.driveID||''; }
         function guardarConfig(){ DB.config.inflacion=document.getElementById('conf_inflacion').value; DB.config.indirectos=document.getElementById('conf_indirectos').value; DB.config.scriptURL=document.getElementById('conf_url').value; DB.config.driveID=document.getElementById('conf_drive').value; const processFile = (id, key) => { const f = document.getElementById(id).files[0]; if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal();}; r.readAsDataURL(f); } }; processFile('conf_logo', 'logoBase64'); processFile('conf_codi', 'codiBase64'); setTimeout(()=>{saveLocal(); Swal.fire('Guardado'); cerrarConfig(); checkLogo();}, 500); }
+        
         async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB, driveID:DB.config.driveID})});Swal.fire('Respaldo enviado a Nube/Drive');}catch(e){Swal.fire('Error',e.message);}}
 
         async function generarPDFMaster(tipo){
@@ -552,9 +421,7 @@
                 listaConceptosGlobal.forEach((c,i)=>{ doc.setFont("helvetica","bold"); doc.setTextColor(0,51,102); doc.text(`${i+1}. ${c.tipo} (${c.ancho}x${c.alto}m)`,10,y); y+=5; doc.setFont("helvetica","normal"); doc.setTextColor(60); doc.text(c.desc,10,y); y+=5; if(desglose){ let rows = c.mats.map(m=>[`  - ${m.n} (x${m.c})`, '']); rows.push(['Mano de Obra y Fabricación', '']); rows.push(['SUBTOTAL CONCEPTO', `$${c.subtotal.toFixed(2)}`]); doc.autoTable({startY:y, body:rows, theme:'plain', styles:{fontSize:9}}); } else { doc.autoTable({startY:y,head:[['Descripción','Importe']],body:[['Suministro y Fabricación',`$${c.subtotal.toFixed(2)}`]],theme:'grid',styles:{fontSize:10}}); } y=doc.lastAutoTable.finalY+8; });
                 let startX = 140; doc.setFontSize(10); doc.setTextColor(0); if(cg.fl>0){doc.text(`Flete: $${cg.fl.toFixed(2)}`,startX,y); y+=5;} if(cg.ma>0){doc.text(`Maniobras: $${cg.ma.toFixed(2)}`,startX,y); y+=5;} if(cg.desc>0){ doc.setTextColor(200,0,0); doc.text(`Descuento: -$${cg.desc.toFixed(2)}`,startX,y); doc.setTextColor(0); y+=5; } if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} 
                 doc.setFillColor(0,51,102); doc.rect(130,y,70,10,'F'); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(`TOTAL: $${cg.total.toFixed(2)}`,195,y+7,{align:'right'}); doc.setTextColor(0); doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.text("DATOS DE PAGO:", 10, 250); doc.setFont("helvetica","normal"); doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta}`, 10, 255); doc.text(`CLABE: ${DATOS.clabe}`, 10, 260); if(DB.config.codiBase64){try{doc.text("CODI:",130,250);doc.addImage(DB.config.codiBase64,'PNG',130,252,25,25);}catch(e){}}
-            } else {
-                listaConceptosGlobal.forEach((c,i)=>{ doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5; let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10; });
-            }
+            } else { listaConceptosGlobal.forEach((c,i)=>{ doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5; let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10; }); }
             doc.save(`${fol}_${tipo}.pdf`);
         }
     </script>
