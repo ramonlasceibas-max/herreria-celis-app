@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herrería Celis | System V16.6</title>
+    <title>Herrería Celis | System V17.0 Master</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,6 +16,9 @@
         :root { --bg: #050505; --glass: rgba(20, 20, 20, 0.95); --neon: #00E5FF; }
         body { background-color: var(--bg); color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
         
+        /* CANVAS CHISPAS */
+        #sparksCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
         .glass-card { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; }
         .input-celis { background: rgba(0,0,0,0.6); border: 1px solid #333; color: #fff; padding: 10px; border-radius: 6px; width: 100%; font-size: 13px; transition: 0.3s; }
         .input-celis:focus { border-color: var(--neon); outline: none; box-shadow: 0 0 10px rgba(0,229,255,0.2); }
@@ -24,22 +27,24 @@
         .btn-neon:hover { background: var(--neon); color: #000; box-shadow: 0 0 10px rgba(0,229,255,0.4); }
         .btn-primary { background: var(--neon); color: #000; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s; }
         .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0,229,255,0.4); }
-
-        #modalConfig, #modalCliente, #modalPrecios { z-index: 9999 !important; }
+        
+        /* Utilidades */
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
-        
-        /* Checkbox Custom */
         .toggle-switch { appearance: none; width: 40px; height: 20px; background: #333; border-radius: 20px; position: relative; cursor: pointer; outline: none; }
         .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: #fff; border-radius: 50%; transition: 0.3s; }
         .toggle-switch:checked { background: var(--neon); }
         .toggle-switch:checked::after { transform: translateX(20px); background: #000; }
+        
+        /* Animación Tarjetas Dashboard */
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); border-color: var(--neon); cursor: pointer; }
     </style>
 </head>
 <body>
+    <canvas id="sparksCanvas"></canvas>
 
-    <div id="landingPage" class="min-h-screen flex flex-col items-center justify-center p-4 relative bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+    <div id="landingPage" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
         <div class="text-center mb-10 cursor-pointer select-none group" onclick="intentarAdmin()">
             <div id="logoContainer" class="w-32 h-32 mx-auto mb-6 rounded-full border-2 border-[#00E5FF] flex items-center justify-center bg-black shadow-[0_0_30px_rgba(0,229,255,0.2)] overflow-hidden">
                 <i id="defaultIcon" class="fas fa-hammer text-5xl text-[#00E5FF]"></i>
@@ -61,39 +66,14 @@
         <div class="mt-10 text-center"><p class="text-[10px] text-gray-600 uppercase">Emiliano Zapata, Morelos</p></div>
     </div>
 
-    <div id="modalCliente" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="glass-card w-full max-w-md p-6 relative">
-            <button onclick="cerrarCotizadorCliente()" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            <h2 class="text-2xl font-bold text-white mb-1">Tu Proyecto</h2>
-            <p class="text-xs text-gray-400 mb-4">Paso <span id="stepCount">1</span> de 3</p>
-            
-            <div id="step1" class="step-content fade-in">
-                <label class="text-[#00E5FF] text-xs font-bold">Tu Nombre</label><input id="cli_nombre" class="input-celis mb-4">
-                <label class="text-[#00E5FF] text-xs font-bold">Ubicación</label><input id="cli_ubi" class="input-celis mb-6">
-                <button onclick="nextStep(2)" class="btn-primary w-full">Siguiente</button>
-            </div>
-            <div id="step2" class="step-content hidden fade-in">
-                <label class="text-[#00E5FF] text-xs font-bold">Tipo</label><select id="cli_tipo" class="input-celis mb-4"><option>Portón</option><option>Puerta</option><option>Ventana</option><option>Techumbre</option><option>Barandal</option><option>Otro</option></select>
-                <label class="text-[#00E5FF] text-xs font-bold">Medidas / Detalles</label><textarea id="cli_detalles" class="input-celis mb-6" rows="3"></textarea>
-                <div class="flex gap-2"><button onclick="nextStep(1)" class="btn-neon w-1/3">Atrás</button><button onclick="nextStep(3)" class="btn-primary w-2/3">Siguiente</button></div>
-            </div>
-            <div id="step3" class="step-content hidden fade-in">
-                <div class="flex items-center gap-3 mb-4 bg-gray-900 p-2 rounded"><input type="checkbox" id="chkFactura" onchange="toggleFacturaCliente()"><span class="text-xs">Requiero Factura</span></div>
-                <div id="boxFacturaCliente" class="hidden mb-4"><input id="f_rfc" class="input-celis mb-2" placeholder="RFC"><input id="f_razon" class="input-celis" placeholder="Razón Social"></div>
-                <div class="bg-[#00E5FF]/10 p-3 rounded mb-4 text-center border border-[#00E5FF]"><p class="text-white text-xs font-bold"><i class="fas fa-camera"></i> ADJUNTAR FOTO EN WHATSAPP</p></div>
-                <button onclick="enviarWhatsAppCliente()" class="btn-primary w-full bg-green-600 border-none hover:bg-green-500">ENVIAR SOLICITUD</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="adminPanel" class="hidden min-h-screen bg-black p-2 md:p-4 fade-in">
+    <div id="adminPanel" class="hidden min-h-screen p-2 md:p-4 fade-in">
         <div class="flex justify-between items-center mb-4 glass-card p-3 sticky top-0 z-40 bg-black/90">
             <div class="flex items-center gap-2 cursor-pointer" onclick="salirAdmin()">
                 <div class="w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center text-black font-bold">HC</div>
-                <div><h2 class="text-white font-bold text-sm">V16.6 SYSTEM</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
+                <div><h2 class="text-white font-bold text-sm">V17.0 MASTER</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
             </div>
             <div class="flex gap-2">
-                <button onclick="sincronizarNube()" class="btn-neon px-2 text-xs"><i class="fas fa-cloud"></i></button>
+                <button onclick="sincronizarNube()" class="btn-neon px-2 text-xs" title="Respaldo Drive"><i class="fas fa-cloud"></i></button>
                 <button onclick="verDashboard()" class="btn-neon px-2 text-xs"><i class="fas fa-home"></i></button>
                 <button onclick="abrirConfig()" class="btn-neon px-2 text-xs"><i class="fas fa-cog"></i></button>
             </div>
@@ -101,13 +81,33 @@
 
         <div id="viewDashboard" class="max-w-6xl mx-auto">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="glass-card p-4 border-l-4 border-[#00E5FF]"><p class="text-gray-500 text-[10px] uppercase">Ventas</p><h3 class="text-xl font-bold text-white" id="statVentas">$0.00</h3></div>
-                <div class="glass-card p-4 border-l-4 border-yellow-500"><p class="text-gray-500 text-[10px] uppercase">Pendientes</p><h3 class="text-xl font-bold text-white" id="statPend">0</h3></div>
+                <div onclick="filtrarHistorial('Vendido')" class="glass-card p-4 border-l-4 border-[#00E5FF] card-hover">
+                    <p class="text-gray-500 text-[10px] uppercase">Ventas</p>
+                    <h3 class="text-xl font-bold text-white" id="statVentas">$0.00</h3>
+                </div>
+                <div onclick="filtrarHistorial('Pendiente')" class="glass-card p-4 border-l-4 border-yellow-500 card-hover">
+                    <p class="text-gray-500 text-[10px] uppercase">Pendientes</p>
+                    <h3 class="text-xl font-bold text-white" id="statPend">0</h3>
+                </div>
                 <div onclick="nuevoPedidoFull()" class="glass-card p-4 border border-[#00E5FF] flex items-center justify-center cursor-pointer hover:bg-[#00E5FF] hover:text-black transition col-span-2 md:col-span-1 shadow-[0_0_15px_rgba(0,229,255,0.2)]">
                     <span class="font-bold text-sm flex items-center gap-2"><i class="fas fa-plus-circle"></i> NUEVO PEDIDO</span>
                 </div>
             </div>
-            <div class="glass-card p-4"><h3 class="text-[#00E5FF] mb-2 text-xs font-bold uppercase">Historial</h3><div class="overflow-x-auto"><table class="w-full text-xs text-gray-400 text-left"><thead class="bg-gray-900 text-white"><tr><th class="p-2">Folio</th><th class="p-2">Cliente</th><th class="p-2">Total</th><th class="p-2">Estado</th><th class="p-2 text-right">X</th></tr></thead><tbody id="tablaHistorial"></tbody></table></div></div>
+            
+            <div class="glass-card p-4">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-[#00E5FF] text-xs font-bold uppercase">Historial de Proyectos</h3>
+                    <button onclick="renderHistorial()" class="text-[10px] text-gray-400 hover:text-white">Ver Todos</button>
+                </div>
+                <div class="overflow-x-auto min-h-[300px]">
+                    <table class="w-full text-xs text-gray-400 text-left">
+                        <thead class="bg-gray-900 text-white">
+                            <tr><th class="p-2">Folio</th><th class="p-2">Cliente</th><th class="p-2">Total</th><th class="p-2">Estado</th><th class="p-2 text-right">Acciones</th></tr>
+                        </thead>
+                        <tbody id="tablaHistorial"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
         <div id="viewCotizador" class="hidden max-w-7xl mx-auto pb-20">
@@ -135,7 +135,6 @@
                             <input type="number" id="item_ancho" class="input-celis text-xs text-center" placeholder="Ancho (m)">
                             <input type="number" id="item_alto" class="input-celis text-xs text-center" placeholder="Alto (m)">
                         </div>
-
                         <textarea id="item_desc" class="input-celis mb-3 text-xs" rows="2" placeholder="Detalles del diseño..."></textarea>
                         
                         <div class="bg-black p-3 rounded mb-3 border border-gray-800">
@@ -147,14 +146,14 @@
                             <div class="flex gap-2 mb-2">
                                 <input list="listaMateriales" id="inputBusquedaMat" class="input-celis text-xs w-full" placeholder="Buscar material...">
                                 <datalist id="listaMateriales"></datalist>
-                                <button onclick="crearMaterial()" class="btn-neon px-2 text-[10px] border-green-500 text-green-500 hover:bg-green-500 hover:text-white" title="Nuevo">+</button>
-                                <button onclick="abrirGestorPrecios()" class="btn-neon px-2 text-[10px] border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black" title="Editar Catálogo y Precios">💲</button>
+                                <button onclick="crearMaterial()" class="btn-neon px-2 text-[10px] border-green-500 text-green-500 hover:bg-green-500" title="Nuevo">+</button>
+                                <button onclick="abrirGestorPrecios()" class="btn-neon px-2 text-[10px] border-yellow-500 text-yellow-500 hover:bg-yellow-500 hover:text-black" title="Catálogo">💲</button>
+                                <button onclick="abrirOptimizador()" class="btn-neon px-2 text-[10px] border-purple-500 text-purple-500 hover:bg-purple-500 hover:text-white" title="Calcular Cortes">📐</button>
                             </div>
                             <div class="flex gap-2 mb-2">
                                 <input type="number" id="mat_cant" class="input-celis w-20 text-center font-bold text-xs" value="1" placeholder="Cant">
                                 <button onclick="addMaterialToItem()" class="btn-primary py-1 px-4 w-full text-xs">AGREGAR MATERIAL</button>
                             </div>
-
                             <div class="h-32 overflow-y-auto border border-gray-800 rounded p-1"><table class="w-full text-[10px] text-gray-400"><tbody id="listaMaterialesTemp"></tbody></table></div>
                         </div>
 
@@ -173,19 +172,20 @@
                     <div class="glass-card p-4 bg-black min-h-[400px] flex flex-col justify-between sticky top-4">
                         <div>
                             <div class="flex justify-between items-center mb-2 border-b border-gray-800 pb-2"><h3 class="text-white font-bold text-xs uppercase">Proyectos Acumulados</h3><input id="p_folio" class="bg-gray-800 text-white text-[10px] p-1 w-16 text-center rounded" readonly></div>
-                            
                             <div class="space-y-2 max-h-[300px] overflow-y-auto" id="listaConceptosGlobal">
                                 <div class="text-center text-gray-700 text-xs py-10 italic">Aún no agregas proyectos.</div>
                             </div>
                         </div>
                         <div class="mt-4 border-t border-gray-800 pt-2">
                             <div class="flex justify-between text-xs text-gray-400 mb-1"><span>Subtotal:</span> <span id="lblGlobalSub">$0.00</span></div>
-                            
                             <div class="grid grid-cols-2 gap-2 mb-2">
                                 <div><label class="text-[9px] text-gray-500">Flete</label><input type="number" id="global_flete" class="input-celis text-right text-xs p-1" value="0" onchange="calcGlobal()"></div>
                                 <div><label class="text-[9px] text-yellow-500">Maniobras</label><input type="number" id="global_mani" class="input-celis text-right text-xs p-1 border-yellow-900" value="0" onchange="calcGlobal()"></div>
                             </div>
-
+                            <div class="mb-2">
+                                <label class="text-[9px] text-red-500 font-bold">DESCUENTO</label>
+                                <input type="number" id="global_desc" class="input-celis text-right text-xs p-1 border-red-900 text-red-400" value="0" onchange="calcGlobal()" placeholder="0.00">
+                            </div>
                             <div class="grid grid-cols-2 gap-2 mb-3 bg-gray-900 p-2 rounded border border-gray-800">
                                 <div class="flex flex-col items-center">
                                     <label class="text-[9px] text-[#00E5FF] mb-1 font-bold">COBRAR IVA (16%)</label>
@@ -196,22 +196,72 @@
                                     <input type="checkbox" id="chkDesglose" class="toggle-switch">
                                 </div>
                             </div>
-
                             <div class="flex justify-between text-xs text-[#00E5FF] mb-1 hidden" id="rowIvaDisplay">
                                 <span>IVA (16%):</span> <span id="lblGlobalIva">$0.00</span>
                             </div>
-
-                            <div class="bg-[#00E5FF] p-2 rounded text-center mb-3"><p class="text-[9px] text-black uppercase font-bold">Total Final</p><h2 class="text-2xl font-black text-black" id="lblGlobalTotal">$0.00</h2></div>
-                            
-                            <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-[#00E5FF] p-2 rounded text-center mb-3">
+                                <p class="text-[9px] text-black uppercase font-bold">Total Final</p>
+                                <h2 class="text-2xl font-black text-black" id="lblGlobalTotal">$0.00</h2>
+                                <p id="lblUtilidad" class="text-[9px] text-black/50 font-bold mt-1">Utilidad: $0.00</p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mb-2">
                                 <button onclick="generarPDFMaster('cliente')" class="btn-primary text-xs w-full">PDF Cliente</button>
                                 <button onclick="generarPDFMaster('taller')" class="btn-neon text-xs w-full">PDF Taller</button>
                             </div>
-                            <button onclick="guardarPresupuestoGlobal()" class="w-full mt-2 text-green-500 text-xs underline">Guardar en Historial</button>
+                            <button onclick="calcularListaCompra()" class="w-full mb-2 bg-gray-800 text-white border border-gray-600 hover:bg-white hover:text-black transition text-xs font-bold py-2 rounded">
+                                <i class="fas fa-list-ol mr-2"></i> 📋 LISTA DE COMPRA
+                            </button>
+                            <button onclick="guardarPresupuestoGlobal()" class="w-full mt-2 text-green-500 text-xs underline font-bold hover:text-white">💾 GUARDAR PROGRESO</button>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div id="modalCliente" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="glass-card w-full max-w-md p-6 relative">
+            <button onclick="cerrarCotizadorCliente()" class="absolute top-4 right-4 text-gray-500 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <h2 class="text-2xl font-bold text-white mb-1">Tu Proyecto</h2>
+            <div id="step1" class="step-content fade-in">
+                <label class="text-[#00E5FF] text-xs font-bold">Tu Nombre</label><input id="cli_nombre" class="input-celis mb-4">
+                <label class="text-[#00E5FF] text-xs font-bold">Ubicación</label><input id="cli_ubi" class="input-celis mb-6">
+                <button onclick="nextStep(2)" class="btn-primary w-full">Siguiente</button>
+            </div>
+            <div id="step2" class="step-content hidden fade-in">
+                <label class="text-[#00E5FF] text-xs font-bold">Tipo</label><select id="cli_tipo" class="input-celis mb-4"><option>Portón</option><option>Puerta</option><option>Ventana</option><option>Techumbre</option></select>
+                <label class="text-[#00E5FF] text-xs font-bold">Detalles</label><textarea id="cli_detalles" class="input-celis mb-6" rows="3"></textarea>
+                <div class="flex gap-2"><button onclick="nextStep(1)" class="btn-neon w-1/3">Atrás</button><button onclick="nextStep(3)" class="btn-primary w-2/3">Siguiente</button></div>
+            </div>
+            <div id="step3" class="step-content hidden fade-in">
+                <div class="flex items-center gap-3 mb-4 bg-gray-900 p-2 rounded"><input type="checkbox" id="chkFacturaCli"><span class="text-xs">Requiero Factura</span></div>
+                <div id="boxFacturaCliente" class="hidden mb-4"><input id="f_rfc" class="input-celis" placeholder="RFC"></div>
+                <button onclick="enviarWhatsAppCliente()" class="btn-primary w-full bg-green-600">ENVIAR SOLICITUD</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOptimizador" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm" style="z-index: 99999;">
+        <div class="glass-card w-full max-w-sm p-6 bg-black border border-purple-500">
+            <h2 class="text-purple-500 font-bold mb-4"><i class="fas fa-ruler-combined"></i> Calculadora de Cortes</h2>
+            <label class="text-xs text-gray-400">¿Qué vas a armar?</label>
+            <input id="opt_concepto" class="input-celis mb-2" placeholder="Ej: Marco Ventana">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div><label class="text-xs text-gray-400">Alto (m)</label><input type="number" id="opt_alto" class="input-celis"></div>
+                <div><label class="text-xs text-gray-400">Ancho (m)</label><input type="number" id="opt_ancho" class="input-celis"></div>
+            </div>
+            <label class="text-xs text-gray-400">Material</label>
+            <input id="opt_material" class="input-celis mb-4" placeholder="Ej: P-150">
+            
+            <div id="opt_resultado" class="hidden p-3 bg-gray-900 rounded mb-4 text-xs">
+                <p class="text-white">Perímetro Total: <span id="opt_res_m" class="text-[#00E5FF] font-bold">0m</span></p>
+                <p class="text-white">Tramos (6m): <span id="opt_res_tramos" class="text-yellow-500 font-bold text-lg">0</span></p>
+                <p class="text-gray-500 italic" id="opt_res_sobra">Sobra: 0m</p>
+            </div>
+
+            <button onclick="calcularOptimizacion()" class="btn-neon w-full mb-2 border-purple-500 text-purple-500">CALCULAR</button>
+            <button onclick="agregarOptimizado()" class="btn-primary w-full hidden" id="btnAddOpt">AGREGAR A LISTA</button>
+            <button onclick="document.getElementById('modalOptimizador').classList.add('hidden')" class="text-gray-500 text-xs w-full mt-2">Cerrar</button>
         </div>
     </div>
 
@@ -220,17 +270,18 @@
             <h2 class="text-white font-bold mb-4">Configuración</h2>
             <div class="space-y-3">
                 <div><label class="text-xs text-[#00E5FF]">URL Apps Script</label><input id="conf_url" class="input-celis text-xs"></div>
+                <div><label class="text-xs text-[#00E5FF]">ID Carpeta Drive (Opcional)</label><input id="conf_drive" class="input-celis text-xs" placeholder="ID de la carpeta"></div>
                 <div class="grid grid-cols-2 gap-2">
                     <div><label class="text-xs text-[#00E5FF]">Inflación %</label><input type="number" id="conf_inflacion" class="input-celis text-xs"></div>
                     <div><label class="text-xs text-[#00E5FF]">Indirectos %</label><input type="number" id="conf_indirectos" class="input-celis text-xs"></div>
                 </div>
                 <div class="border border-gray-800 p-2 rounded">
                     <label class="text-xs text-[#00E5FF] block mb-1">Logo Empresa</label>
-                    <div class="flex items-center gap-2"><img id="imgLogoPreview" src="" class="w-8 h-8 object-contain bg-white rounded hidden"><input type="file" id="conf_logo" class="text-[10px] text-gray-400" accept="image/*"></div>
+                    <input type="file" id="conf_logo" class="text-[10px] text-gray-400" accept="image/*">
                 </div>
                 <div class="border border-gray-800 p-2 rounded">
                     <label class="text-xs text-yellow-500 block mb-1">Imagen QR CoDi</label>
-                    <div class="flex items-center gap-2"><img id="imgCodiPreview" src="" class="w-8 h-8 object-contain bg-white rounded hidden"><input type="file" id="conf_codi" class="text-[10px] text-gray-400" accept="image/*"></div>
+                    <input type="file" id="conf_codi" class="text-[10px] text-gray-400" accept="image/*">
                 </div>
                 <button onclick="guardarConfig()" class="btn-primary w-full mt-2">Guardar</button>
                 <button onclick="cerrarConfig()" class="w-full text-center text-gray-500 text-xs mt-3">Cerrar</button>
@@ -240,354 +291,272 @@
 
     <div id="modalPrecios" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="glass-card w-full max-w-md p-6 border border-yellow-600 bg-black h-3/4 flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-yellow-500 font-bold"><i class="fas fa-tags"></i> Catálogo de Precios</h2>
-                <button onclick="document.getElementById('modalPrecios').classList.add('hidden')" class="text-gray-500 hover:text-white">x</button>
-            </div>
-            
-            <input id="searchGestor" onkeyup="renderGestor()" class="input-celis mb-3 text-xs" placeholder="Filtrar materiales...">
-            
+            <div class="flex justify-between items-center mb-4"><h2 class="text-yellow-500 font-bold">Catálogo</h2><button onclick="document.getElementById('modalPrecios').classList.add('hidden')" class="text-gray-500">x</button></div>
+            <input id="searchGestor" onkeyup="renderGestor()" class="input-celis mb-3 text-xs" placeholder="Filtrar...">
             <div class="flex-1 overflow-y-auto border border-gray-800 rounded p-1 bg-gray-900/50">
-                <table class="w-full text-xs text-left">
-                    <thead class="text-gray-500 border-b border-gray-700 sticky top-0 bg-black">
-                        <tr><th class="p-2">Material</th><th class="p-2 text-right">Precio</th><th class="p-2 text-right">Acción</th></tr>
-                    </thead>
-                    <tbody id="listaGestorPrecios" class="text-gray-300">
-                        </tbody>
-                </table>
+                <table class="w-full text-xs text-left"><thead class="text-gray-500 border-b border-gray-700 sticky top-0 bg-black"><tr><th class="p-2">Material</th><th class="p-2 text-right">Precio</th><th class="p-2 text-right">Acción</th></tr></thead><tbody id="listaGestorPrecios" class="text-gray-300"></tbody></table>
             </div>
-            <p class="text-[9px] text-gray-500 mt-2 text-center">Toca el lápiz para actualizar precio. Toca la basura para borrar.</p>
         </div>
     </div>
 
     <script>
-        let DB={config:{inflacion:0,indirectos:10,rol:'A',folioCount:1000,scriptURL:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[], tipos:[]};
+        let DB={config:{inflacion:0,indirectos:10,rol:'A',folioCount:1000,scriptURL:'',driveID:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[], tipos:[]};
         let listaConceptosGlobal=[], itemActual={materiales:[]};
-        // DATOS FIJOS
         const DATOS={nom:"HERRERÍA CELIS",slogan:"ARQUITECTURA Y FUERZA EN ACERO",dir:"Carretera Zapata-Tezoyuca km 3.5, Emiliano Zapata, Morelos",tel:"777 220 0288",wa:"56 4582 6729",rfc:"XAXX010101000",banco:"BBVA",cuenta:"XXXX-XXXX-XXXX",clabe:"XXXXXXXXXXXXXXXXXX"};
         let CAT=[{n:"PTR 4x4 Verde",p:1200},{n:"PTR 2x2 Verde",p:600},{n:"PTR 1x1 C-14",p:350},{n:"Ángulo 1/8 x 1 1/2",p:350},{n:"Solera 3/16 x 2",p:280},{n:"Lámina Cal 18",p:1500},{n:"Riel 1500",p:800},{n:"Carretillas",p:150},{n:"Bisagra Tubular",p:45},{n:"Chapa Residential",p:450},{n:"Electrodo Kg",p:85},{n:"Primer Lt",p:180},{n:"Esmalte Lt",p:220},{n:"Thinner",p:40},{n:"Disco Corte",p:25},{n:"Gasolina Lt",p:25}];
 
-        window.onload=()=>{loadLocal();renderCat();renderTipos();renderHistorial();checkLogo();};
+        // INIT & CHISPAS
+        window.onload=()=>{
+            loadLocal();renderCat();renderTipos();renderHistorial();checkLogo();initSparks();
+        };
 
-        // CORE
+        function initSparks() {
+            const c=document.getElementById('sparksCanvas'), x=c.getContext('2d');
+            let w,h,p=[]; const resize=()=>{w=c.width=window.innerWidth;h=c.height=window.innerHeight;}; window.addEventListener('resize',resize); resize();
+            class P{constructor(){this.reset();}reset(){this.x=Math.random()*w;this.y=Math.random()*-h;this.vx=(Math.random()-0.5);this.vy=Math.random()*2+1;this.size=Math.random()*2;this.color=Math.random()>0.5?'#FFD700':'#FF4500';this.life=1;}update(){this.x+=this.vx;this.y+=this.vy;if(this.y>h)this.reset();}draw(){x.fillStyle=this.color;x.globalAlpha=Math.random()*0.5+0.2;x.beginPath();x.arc(this.x,this.y,this.size,0,Math.PI*2);x.fill();}}
+            for(let i=0;i<40;i++)p.push(new P());
+            function a(){x.clearRect(0,0,w,h);p.forEach(z=>{z.update();z.draw();});requestAnimationFrame(a);} a();
+        }
+
+        // --- OPTIMIZADOR DE CORTES (NUEVO) ---
+        function abrirOptimizador(){document.getElementById('modalOptimizador').classList.remove('hidden');}
+        function calcularOptimizacion(){
+            const h = parseFloat(document.getElementById('opt_alto').value)||0;
+            const w = parseFloat(document.getElementById('opt_ancho').value)||0;
+            if(h===0 || w===0) return;
+            
+            // Perímetro: 2 altos + 2 anchos (básico marco)
+            const perimetro = (h*2) + (w*2);
+            const tramoStd = 6.0;
+            const tramos = Math.ceil(perimetro / tramoStd);
+            const sobrante = (tramos * tramoStd) - perimetro;
+
+            document.getElementById('opt_res_m').innerText = perimetro.toFixed(2) + 'm';
+            document.getElementById('opt_res_tramos').innerText = tramos;
+            document.getElementById('opt_res_sobra').innerText = `Sobran: ${sobrante.toFixed(2)}m (Retacería)`;
+            document.getElementById('opt_resultado').classList.remove('hidden');
+            document.getElementById('btnAddOpt').classList.remove('hidden');
+        }
+        function agregarOptimizado(){
+            const mat = document.getElementById('opt_material').value || "Perfil Estructura";
+            const tramos = parseFloat(document.getElementById('opt_res_tramos').innerText);
+            
+            // Buscar precio si existe
+            let precio = 0;
+            const matObj = CAT.find(x => x.n.toLowerCase().includes(mat.toLowerCase()));
+            if(matObj) precio = matObj.p;
+            else {
+                Swal.fire('Material nuevo', 'Define el precio unitario de: '+mat, 'question').then(()=>{});
+                // Si no existe, lo mete con precio 0 para que lo edites
+            }
+
+            itemActual.materiales.push({n: mat + " (Tramos 6m)", p: precio, c: tramos});
+            renderItemMat();
+            document.getElementById('modalOptimizador').classList.add('hidden');
+            Swal.fire({toast:true, icon:'success', title:'Agregado a la lista', position:'top-end', showConfirmButton:false, timer:1500});
+        }
+
+        // CORE & NAV
         let cc=0; function intentarAdmin(){cc++;if(cc===3){cc=0;Swal.fire({title:'Admin',input:'password',background:'#000',color:'#fff',confirmButtonColor:'#00E5FF',preConfirm:p=>p==='admin123'}).then(r=>{if(r.isConfirmed){document.getElementById('landingPage').classList.add('hidden');document.getElementById('adminPanel').classList.remove('hidden');updateDashboard();checkLogo();}})}}
         function salirAdmin(){document.getElementById('adminPanel').classList.add('hidden');document.getElementById('landingPage').classList.remove('hidden');}
-        function checkLogo(){
-            if(DB.config.logoBase64 && DB.config.logoBase64.length>50){
-                document.getElementById('defaultIcon').classList.add('hidden');
-                document.getElementById('landingLogoImg').src=DB.config.logoBase64;
-                document.getElementById('landingLogoImg').classList.remove('hidden');
-                document.getElementById('imgLogoPreview').src=DB.config.logoBase64;
-                document.getElementById('imgLogoPreview').classList.remove('hidden');
-            }
-            if(DB.config.codiBase64){
-                document.getElementById('imgCodiPreview').src=DB.config.codiBase64;
-                document.getElementById('imgCodiPreview').classList.remove('hidden');
-            }
-        }
+        function checkLogo(){ if(DB.config.logoBase64 && DB.config.logoBase64.length>50){ document.getElementById('defaultIcon').classList.add('hidden'); document.getElementById('landingLogoImg').src=DB.config.logoBase64; document.getElementById('landingLogoImg').classList.remove('hidden'); } }
 
-        // CLIENTE
+        // CLIENTE FAST
         function abrirCotizadorCliente(){document.getElementById('modalCliente').classList.remove('hidden');nextStep(1);}
         function cerrarCotizadorCliente(){document.getElementById('modalCliente').classList.add('hidden');}
-        function nextStep(s){document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden'));document.getElementById(`step${s}`).classList.remove('hidden');document.getElementById('stepCount').innerText=s;}
-        function toggleFacturaCliente(){document.getElementById('boxFacturaCliente').classList.toggle('hidden',!document.getElementById('chkFactura').checked);}
-        
-        function enviarWhatsAppCliente(){
-            const n = document.getElementById('cli_nombre').value;
-            const u = document.getElementById('cli_ubi').value || "Ubicación pendiente";
-            const d = document.getElementById('cli_detalles').value || "Sin detalles";
-            const tipo = document.getElementById('cli_tipo').value;
-            if(!n || n.trim() === "") { Swal.fire({icon:'warning',title:'Falta nombre',confirmButtonColor:'#00E5FF'}); return; }
-            let m = `👋 Hola Herrería Celis, soy *${n}*.\n📍 *Ubicación:* ${u}\n🛠️ *Interés:* ${tipo}\n📝 *Detalles:* ${d}`;
-            if(document.getElementById('chkFactura').checked){ m += `\n\n📄 *REQUIERO FACTURA*\nRFC: ${document.getElementById('f_rfc').value}`; }
-            window.location.href = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`;
-            setTimeout(() => { cerrarCotizadorCliente(); }, 1000);
-        }
+        function nextStep(s){document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden'));document.getElementById(`step${s}`).classList.remove('hidden');}
+        function enviarWhatsAppCliente(){ const n = document.getElementById('cli_nombre').value; const m = `👋 Hola Herrería Celis, soy *${n}*. Interés: ${document.getElementById('cli_tipo').value}. ${document.getElementById('cli_detalles').value}`; window.location.href = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`; setTimeout(cerrarCotizadorCliente, 1000); }
 
-        // ADMIN
+        // LOGICA DE COTIZACIÓN
         function renderCat(){document.getElementById('listaMateriales').innerHTML=CAT.map(m=>`<option value="${m.n}">$${m.p}</option>`).join('');}
-        
-        function crearMaterial(){
-            Swal.fire({
-                title: 'Nuevo Material',
-                html: '<input id="swal-input1" class="swal2-input" placeholder="Nombre">' + '<input id="swal-input2" class="swal2-input" placeholder="Precio" type="number">',
-                focusConfirm: false, background: '#000', color: '#fff', confirmButtonColor:'#00E5FF',
-                preConfirm: () => { return [document.getElementById('swal-input1').value, document.getElementById('swal-input2').value] }
-            }).then((result) => {
-                if(result.value && result.value[0] && result.value[1]){
-                    const nombre = result.value[0];
-                    const precio = parseFloat(result.value[1]);
-                    CAT.push({n: nombre, p: precio});
-                    saveLocal(); // Guardar cambios en catalogo
-                    renderCat();
-                    document.getElementById('inputBusquedaMat').value = nombre;
-                    Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false});
-                }
-            });
-        }
+        function crearMaterial(){ Swal.fire({ title: 'Nuevo Material', html: '<input id="swal-input1" class="swal2-input" placeholder="Nombre">' + '<input id="swal-input2" class="swal2-input" placeholder="Precio" type="number">', focusConfirm: false, background: '#000', color: '#fff', confirmButtonColor:'#00E5FF', preConfirm: () => { return [document.getElementById('swal-input1').value, document.getElementById('swal-input2').value] } }).then((result) => { if(result.value && result.value[0] && result.value[1]){ const nombre = result.value[0]; const precio = parseFloat(result.value[1]); CAT.push({n: nombre, p: precio}); saveLocal(); renderCat(); document.getElementById('inputBusquedaMat').value = nombre; Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false}); } }); }
 
-        // --- GESTOR DE PRECIOS Y MATERIALES (NUEVO) ---
-        function abrirGestorPrecios(){
-            document.getElementById('modalPrecios').classList.remove('hidden');
-            document.getElementById('searchGestor').value = '';
-            renderGestor();
-        }
+        function abrirGestorPrecios(){ document.getElementById('modalPrecios').classList.remove('hidden'); document.getElementById('searchGestor').value = ''; renderGestor(); }
+        function renderGestor(){ const txt = document.getElementById('searchGestor').value.toLowerCase(); const lista = document.getElementById('listaGestorPrecios'); const filtrados = CAT.filter(m => m.n.toLowerCase().includes(txt)); lista.innerHTML = filtrados.map((m, i) => { const realIndex = CAT.indexOf(m); return ` <tr class="border-b border-gray-800 hover:bg-gray-800/50"> <td class="p-2">${m.n}</td> <td class="p-2 text-right font-bold text-green-400">$${m.p}</td> <td class="p-2 text-right"> <button onclick="editarPrecioMat(${realIndex})" class="text-yellow-500 mr-2">✏️</button> <button onclick="borrarMaterial(${realIndex})" class="text-red-500">🗑️</button> </td> </tr>`; }).join(''); }
+        function editarPrecioMat(index){ const mat = CAT[index]; Swal.fire({ title: `Editar: ${mat.n}`, html: `<label class="block text-left text-xs text-gray-400">Nuevo Precio:</label> <input id="newPrice" type="number" class="swal2-input" value="${mat.p}">`, background: '#000', color: '#fff', confirmButtonColor: '#Eab308', preConfirm: () => { return document.getElementById('newPrice').value } }).then((result) => { if(result.isConfirmed){ CAT[index].p = parseFloat(result.value); saveLocal(); renderCat(); renderGestor(); } }); }
+        function borrarMaterial(index){ CAT.splice(index, 1); saveLocal(); renderCat(); renderGestor(); }
 
-        function renderGestor(){
-            const txt = document.getElementById('searchGestor').value.toLowerCase();
-            const lista = document.getElementById('listaGestorPrecios');
-            const filtrados = CAT.filter(m => m.n.toLowerCase().includes(txt));
-            
-            lista.innerHTML = filtrados.map((m, i) => {
-                // Encontrar el índice real en el array original para poder editarlo
-                const realIndex = CAT.indexOf(m);
-                return `
-                <tr class="border-b border-gray-800 hover:bg-gray-800/50">
-                    <td class="p-2">${m.n}</td>
-                    <td class="p-2 text-right font-bold text-green-400">$${m.p}</td>
-                    <td class="p-2 text-right">
-                        <button onclick="editarPrecioMat(${realIndex})" class="text-yellow-500 mr-2 hover:scale-125 transition">✏️</button>
-                        <button onclick="borrarMaterial(${realIndex})" class="text-red-500 hover:scale-125 transition">🗑️</button>
-                    </td>
-                </tr>`;
-            }).join('');
-        }
+        function renderTipos(){ if(!DB.tipos || DB.tipos.length === 0) DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura"]; document.getElementById('item_tipo').innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join(''); }
+        function nuevoTipoTrabajo(){ Swal.fire({title: 'Nuevo Tipo', input: 'text', background: '#000', color: '#fff', confirmButtonColor: '#00E5FF'}).then((r) => { if (r.value) { DB.tipos.push(r.value); saveLocal(); renderTipos(); document.getElementById('item_tipo').value = r.value; } }); }
 
-        function editarPrecioMat(index){
-            const mat = CAT[index];
-            Swal.fire({
-                title: `Editar: ${mat.n}`,
-                html: `<label class="block text-left text-xs text-gray-400">Nuevo Precio:</label>
-                       <input id="newPrice" type="number" class="swal2-input" value="${mat.p}">
-                       <label class="block text-left text-xs text-gray-400 mt-2">Corregir Nombre:</label>
-                       <input id="newName" type="text" class="swal2-input" value="${mat.n}">`,
-                background: '#000', color: '#fff', confirmButtonColor: '#Eab308',
-                preConfirm: () => {
-                    return {
-                        p: document.getElementById('newPrice').value,
-                        n: document.getElementById('newName').value
-                    }
-                }
-            }).then((result) => {
-                if(result.isConfirmed){
-                    CAT[index].p = parseFloat(result.value.p);
-                    CAT[index].n = result.value.n;
-                    saveLocal();
-                    renderCat();
-                    renderGestor();
-                    Swal.fire({toast:true, icon:'success', title:'Actualizado', position:'top-end', timer:1500, showConfirmButton:false});
-                }
-            });
-        }
-
-        function borrarMaterial(index){
-            Swal.fire({
-                title: '¿Eliminar?',
-                text: `Se borrará "${CAT[index].n}" de la lista.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                background: '#000', color: '#fff',
-                confirmButtonText: 'Sí, borrar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    CAT.splice(index, 1);
-                    saveLocal();
-                    renderCat();
-                    renderGestor();
-                    Swal.fire('Borrado', '', 'success');
-                }
-            });
-        }
-
-        // --- GESTIÓN DE TIPOS DE TRABAJO ---
-        function renderTipos(){
-            if(!DB.tipos || DB.tipos.length === 0) DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura", "Escalera", "Reparación", "Soldadura Gral."];
-            document.getElementById('item_tipo').innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join('');
-        }
-        function nuevoTipoTrabajo(){
-            Swal.fire({title: 'Nuevo Tipo', input: 'text', background: '#000', color: '#fff', confirmButtonColor: '#00E5FF', showCancelButton: true}).then((r) => {
-                if (r.isConfirmed && r.value) {
-                    DB.tipos.push(r.value); saveLocal(); renderTipos();
-                    document.getElementById('item_tipo').value = r.value;
-                }
-            });
-        }
-
-        function addMaterialToItem(){
-            const v=document.getElementById('inputBusquedaMat').value, m=CAT.find(x=>x.n===v);
-            if(!m) return Swal.fire('Error','Material no encontrado. Usa [+ Nuevo]','warning');
-            itemActual.materiales.push({n:m.n,p:m.p,c:parseFloat(document.getElementById('mat_cant').value)||1});
-            document.getElementById('inputBusquedaMat').value=''; renderItemMat();
-        }
-        function renderItemMat(){
-            let t=0;
-            document.getElementById('listaMaterialesTemp').innerHTML=itemActual.materiales.map((m,i)=>{
-                t+=m.p*m.c;
-                return `<tr class="border-b border-gray-800"><td class="py-1">${m.c}</td><td>${m.n}</td><td class="text-right">$${(m.p*m.c).toFixed(0)}</td><td class="text-right text-red-500 cursor-pointer" onclick="delItemMat(${i})">x</td></tr>`
-            }).join('');
-            document.getElementById('lblMonitorMateriales').innerText = `$${t.toFixed(2)}`;
-        }
+        function addMaterialToItem(){ const v=document.getElementById('inputBusquedaMat').value, m=CAT.find(x=>x.n===v); if(!m) return Swal.fire('Error','Material no encontrado. Usa [+ Nuevo]','warning'); itemActual.materiales.push({n:m.n,p:m.p,c:parseFloat(document.getElementById('mat_cant').value)||1}); document.getElementById('inputBusquedaMat').value=''; renderItemMat(); }
+        function renderItemMat(){ let t=0; document.getElementById('listaMaterialesTemp').innerHTML=itemActual.materiales.map((m,i)=>{ t+=m.p*m.c; return `<tr class="border-b border-gray-800"><td class="py-1">${m.c}</td><td>${m.n}</td><td class="text-right">$${(m.p*m.c).toFixed(0)}</td><td class="text-right text-red-500 cursor-pointer" onclick="delItemMat(${i})">x</td></tr>` }).join(''); document.getElementById('lblMonitorMateriales').innerText = `$${t.toFixed(2)}`; }
         function delItemMat(i){itemActual.materiales.splice(i,1);renderItemMat();}
-
-        function agregarConceptoALista(){
-            const mo = parseFloat(document.getElementById('item_mo').value)||0;
-            if(itemActual.materiales.length===0 && mo === 0) return Swal.fire('Vacío','Agrega materiales o mano de obra','warning');
-            
-            let cMat=itemActual.materiales.reduce((s,m)=>s+(m.p*m.c),0);
-            const inf=parseFloat(DB.config.inflacion)||0, ind=parseFloat(DB.config.indirectos)||0;
-            const cFinal = cMat*(1+inf/100)*(1+ind/100);
-            const fac=(parseFloat(document.getElementById('item_dif').value)||1);
-            const inst=parseFloat(document.getElementById('item_inst').value)||0;
-            
-            listaConceptosGlobal.push({
-                tipo:document.getElementById('item_tipo').value, 
-                ancho:document.getElementById('item_ancho').value, 
-                alto:document.getElementById('item_alto').value,
-                desc:document.getElementById('item_desc').value, 
-                mats:[...itemActual.materiales], 
-                subtotal: cFinal+(mo*fac)+inst
-            });
-            itemActual.materiales=[]; document.getElementById('item_desc').value=''; document.getElementById('item_mo').value=0; document.getElementById('item_inst').value=0; 
-            renderItemMat(); renderListaGlobal(); 
-            Swal.fire({toast:true, position:'top-end', icon:'success', title:'Proyecto Agregado.', timer:2000, showConfirmButton:false});
-        }
-
-        function renderListaGlobal(){
-            const c=document.getElementById('listaConceptosGlobal');
-            if(listaConceptosGlobal.length===0){c.innerHTML='<div class="text-center text-gray-700 text-xs py-10 italic">Aún no agregas proyectos.</div>';calcGlobal();return;}
-            c.innerHTML=listaConceptosGlobal.map((x,i)=>`
-                <div class="glass-card p-2 border-l-2 border-[#00E5FF] relative group mb-2">
-                    <button onclick="borrarC(${i})" class="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 font-bold">x</button>
-                    <h4 class="text-white text-xs font-bold">${i+1}. ${x.tipo} (${x.ancho}x${x.alto}m)</h4>
-                    <div class="flex justify-between mt-1 text-[10px]">
-                        <span class="text-gray-500 w-32 truncate">${x.desc}</span>
-                        <span class="text-[#00E5FF] font-bold">$${x.subtotal.toFixed(2)}</span>
-                    </div>
-                </div>`).join('');
-            calcGlobal();
-        }
-        function borrarC(i){listaConceptosGlobal.splice(i,1);renderListaGlobal();}
         
-        function calcGlobal(){
-            let sub = listaConceptosGlobal.reduce((s,x)=>s+x.subtotal,0);
-            const fl = parseFloat(document.getElementById('global_flete').value)||0;
-            const ma = parseFloat(document.getElementById('global_mani').value)||0;
-            const cobrarIva = document.getElementById('chkIva').checked;
-            let base = sub + fl + ma;
-            let ivaAmount = cobrarIva ? base * 0.16 : 0;
+        function agregarConceptoALista(){ const mo = parseFloat(document.getElementById('item_mo').value)||0; if(itemActual.materiales.length===0 && mo === 0) return Swal.fire('Vacío','Agrega materiales','warning'); let cMat=itemActual.materiales.reduce((s,m)=>s+(m.p*m.c),0); const inf=parseFloat(DB.config.inflacion)||0, ind=parseFloat(DB.config.indirectos)||0; const cFinal = cMat*(1+inf/100)*(1+ind/100); const fac=(parseFloat(document.getElementById('item_dif').value)||1); const inst=parseFloat(document.getElementById('item_inst').value)||0; listaConceptosGlobal.push({ tipo:document.getElementById('item_tipo').value, ancho:document.getElementById('item_ancho').value, alto:document.getElementById('item_alto').value, desc:document.getElementById('item_desc').value, mats:[...itemActual.materiales], subtotal: cFinal+(mo*fac)+inst }); itemActual.materiales=[]; document.getElementById('item_desc').value=''; document.getElementById('item_mo').value=0; document.getElementById('item_inst').value=0; renderItemMat(); renderListaGlobal(); Swal.fire({toast:true, position:'top-end', icon:'success', title:'Proyecto Agregado', timer:1000, showConfirmButton:false}); }
+        function renderListaGlobal(){ const c=document.getElementById('listaConceptosGlobal'); if(listaConceptosGlobal.length===0){c.innerHTML='<div class="text-center text-gray-700 text-xs py-10 italic">Aún no agregas proyectos.</div>';calcGlobal();return;} c.innerHTML=listaConceptosGlobal.map((x,i)=>` <div class="glass-card p-2 border-l-2 border-[#00E5FF] relative group mb-2"> <button onclick="borrarC(${i})" class="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 font-bold">x</button> <h4 class="text-white text-xs font-bold">${i+1}. ${x.tipo} (${x.ancho}x${x.alto}m)</h4> <div class="flex justify-between mt-1 text-[10px]"> <span class="text-gray-500 w-32 truncate">${x.desc}</span> <span class="text-[#00E5FF] font-bold">$${x.subtotal.toFixed(2)}</span> </div> </div>`).join(''); calcGlobal(); }
+        function borrarC(i){listaConceptosGlobal.splice(i,1);renderListaGlobal();}
+
+        // CALCULO GLOBAL CON UTILIDAD
+        function calcGlobal(){ 
+            let sub = listaConceptosGlobal.reduce((s,x)=>s+x.subtotal,0); 
+            const fl = parseFloat(document.getElementById('global_flete').value)||0; 
+            const ma = parseFloat(document.getElementById('global_mani').value)||0; 
+            const desc = parseFloat(document.getElementById('global_desc').value)||0; 
+            const cobrarIva = document.getElementById('chkIva').checked; 
+            let base = (sub + fl + ma) - desc; if(base < 0) base = 0;
+            let ivaAmount = cobrarIva ? base * 0.16 : 0; 
             
-            document.getElementById('rowIvaDisplay').classList.toggle('hidden', !cobrarIva);
-            document.getElementById('lblGlobalSub').innerText=`$${sub.toFixed(2)}`;
-            document.getElementById('lblGlobalIva').innerText=`$${ivaAmount.toFixed(2)}`;
-            document.getElementById('lblGlobalTotal').innerText=`$${(base + ivaAmount).toFixed(2)}`;
-            return {sub, fl, ma, iva: ivaAmount, total: base + ivaAmount};
+            document.getElementById('rowIvaDisplay').classList.toggle('hidden', !cobrarIva); 
+            document.getElementById('lblGlobalSub').innerText=`$${sub.toFixed(2)}`; 
+            document.getElementById('lblGlobalIva').innerText=`$${ivaAmount.toFixed(2)}`; 
+            document.getElementById('lblGlobalTotal').innerText=`$${(base + ivaAmount).toFixed(2)}`; 
+            
+            // Calculo de Utilidad (Aprox 25% del subtotal si se configuró bien)
+            // Esto es una estimación basada en que el subtotal ya tiene inflacion e indirectos
+            const costoPuro = sub / (1 + (parseFloat(DB.config.indirectos)/100)); 
+            const utilidad = base - costoPuro;
+            document.getElementById('lblUtilidad').innerText = `Utilidad aprox: $${utilidad.toFixed(2)}`;
+
+            return {sub, fl, ma, desc, iva: ivaAmount, total: base + ivaAmount}; 
         }
 
         function nuevoPedidoFull(){
             listaConceptosGlobal=[]; itemActual={materiales:[]};
             ['p_cliente','p_tel','p_ubi','item_desc','inputBusquedaMat'].forEach(i=>document.getElementById(i).value='');
-            document.getElementById('mat_cant').value=1; document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0;
+            document.getElementById('mat_cant').value=1; document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0; document.getElementById('global_desc').value=0;
             document.getElementById('chkIva').checked = false; document.getElementById('chkDesglose').checked = false;
             generarFolio(); renderItemMat(); renderListaGlobal(); verCotizador();
         }
         function generarFolio(){DB.config.folioCount++;document.getElementById('p_folio').value=`${DB.config.rol}-${DB.config.folioCount}`;saveLocal();}
-        function guardarPresupuestoGlobal(){DB.proyectos.push({folio:document.getElementById('p_folio').value, cliente:document.getElementById('p_cliente').value, total:document.getElementById('lblGlobalTotal').innerText, estado:'Pendiente'});saveLocal();Swal.fire('Ok');verDashboard();}
-        function updateDashboard(){document.getElementById('statPend').innerText=DB.proyectos.filter(p=>p.estado==='Pendiente').length; document.getElementById('tablaHistorial').innerHTML=DB.proyectos.slice().reverse().map(p=>`<tr><td class="p-2 text-[#00E5FF]">${p.folio}</td><td>${p.cliente}</td><td>${p.total}</td><td>${p.estado}</td><td class="text-right text-red-500 cursor-pointer" onclick="delHist('${p.folio}')">x</td></tr>`).join('');}
-        function delHist(f){DB.proyectos=DB.proyectos.filter(p=>p.folio!==f);saveLocal();updateDashboard();}
+        
+        function guardarPresupuestoGlobal(){
+            const folio = document.getElementById('p_folio').value;
+            DB.proyectos = DB.proyectos.filter(p => p.folio !== folio);
+            DB.proyectos.push({
+                folio: folio,
+                cliente: document.getElementById('p_cliente').value,
+                tel: document.getElementById('p_tel').value,
+                ubi: document.getElementById('p_ubi').value,
+                total: document.getElementById('lblGlobalTotal').innerText,
+                estado: 'Pendiente',
+                conceptos: [...listaConceptosGlobal],
+                flete: document.getElementById('global_flete').value,
+                mani: document.getElementById('global_mani').value,
+                desc: document.getElementById('global_desc').value,
+                iva: document.getElementById('chkIva').checked,
+                desglose: document.getElementById('chkDesglose').checked,
+                fecha: new Date().toLocaleDateString()
+            });
+            saveLocal();
+            Swal.fire({title:'Guardado',text:'Puedes recuperarlo en el historial',icon:'success',confirmButtonColor:'#00E5FF'});
+            verDashboard();
+        }
+
+        // CARGAR PROYECTO (FIXED) + DUPLICAR
+        function cargarProyecto(folio, duplicar = false){
+            const p = DB.proyectos.find(x => x.folio === folio);
+            if(!p) return;
+            nuevoPedidoFull(); // Reset
+            
+            if(duplicar) {
+                // Generar NUEVO folio, no usar el viejo
+                // p_folio ya se generó en nuevoPedidoFull
+                Swal.fire({toast:true, icon:'success', title:'Proyecto Duplicado', position:'top-end'});
+            } else {
+                // Usar folio original
+                document.getElementById('p_folio').value = p.folio;
+                let numFolio = parseInt(p.folio.split('-')[1]); if(numFolio) DB.config.folioCount = numFolio - 1; 
+                Swal.fire({toast:true, icon:'info', title:'Editando: ' + folio, position:'top-end'});
+            }
+
+            document.getElementById('p_cliente').value = p.cliente || '';
+            document.getElementById('p_tel').value = p.tel || '';
+            document.getElementById('p_ubi').value = p.ubi || '';
+            
+            if(p.conceptos) listaConceptosGlobal = JSON.parse(JSON.stringify(p.conceptos)); // Deep copy
+            document.getElementById('global_flete').value = p.flete || 0;
+            document.getElementById('global_mani').value = p.mani || 0;
+            document.getElementById('global_desc').value = p.desc || 0;
+            document.getElementById('chkIva').checked = p.iva || false;
+            document.getElementById('chkDesglose').checked = p.desglose || false;
+
+            renderListaGlobal();
+            verCotizador(); 
+        }
+
+        function calcularListaCompra() {
+            if(listaConceptosGlobal.length === 0) return Swal.fire('Sin datos', 'Agrega conceptos primero', 'warning');
+            let resumen = {};
+            listaConceptosGlobal.forEach(c => { c.mats.forEach(m => { if(!resumen[m.n]) resumen[m.n] = 0; resumen[m.n] += m.c; }); });
+            let htmlTabla = '<table class="w-full text-left text-sm text-gray-300 border-collapse"><tr class="border-b border-gray-600"><th class="py-2">Material</th><th class="py-2 text-right">Total</th></tr>';
+            for (const [nombre, cantidad] of Object.entries(resumen)) { htmlTabla += `<tr class="border-b border-gray-800"><td class="py-2">${nombre}</td><td class="py-2 text-right font-bold text-[#00E5FF]">${cantidad}</td></tr>`; }
+            htmlTabla += '</table>';
+            Swal.fire({ title: '📋 Lista de Compra', html: htmlTabla, background: '#000', color: '#fff', confirmButtonColor: '#00E5FF' });
+        }
+
+        function updateDashboard(filtro = null){
+            let totalVentas = 0;
+            let pendientes = 0;
+            DB.proyectos.forEach(p => {
+                if(p.estado === 'Vendido') totalVentas += parseFloat(p.total.replace('$','').replace(',',''));
+                if(p.estado === 'Pendiente') pendientes++;
+            });
+            document.getElementById('statVentas').innerText = `$${totalVentas.toLocaleString('es-MX')}`;
+            document.getElementById('statPend').innerText = pendientes;
+
+            // FILTRO DE TARJETAS
+            let lista = DB.proyectos.slice().reverse();
+            if(filtro) lista = lista.filter(p => p.estado === filtro);
+
+            const tabla = document.getElementById('tablaHistorial');
+            tabla.innerHTML = lista.map(p => {
+                let colorEstado = 'text-yellow-500';
+                if(p.estado === 'Vendido') colorEstado = 'text-green-500';
+                if(p.estado === 'Cancelado') colorEstado = 'text-red-500';
+                
+                // Renglón clickeable para abrir directo
+                return `
+                <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer group">
+                    <td class="p-2 text-[#00E5FF] font-bold" onclick="cargarProyecto('${p.folio}')">${p.folio}</td>
+                    <td class="p-2 truncate max-w-[100px]" onclick="cargarProyecto('${p.folio}')">${p.cliente}</td>
+                    <td class="p-2" onclick="cargarProyecto('${p.folio}')">${p.total}</td>
+                    <td class="p-2 ${colorEstado} font-bold text-[10px] uppercase" onclick="cargarProyecto('${p.folio}')">${p.estado}</td>
+                    <td class="p-2 text-right flex gap-2 justify-end">
+                        <button onclick="cargarProyecto('${p.folio}', true)" title="Clonar" class="text-purple-400 hover:scale-125 transition">👯</button>
+                        <button onclick="cambiarEstado('${p.folio}','Vendido')" title="Vendido" class="text-green-500 hover:scale-125 transition">✅</button>
+                        <button onclick="cambiarEstado('${p.folio}','Cancelado')" title="Cancelar" class="text-red-500 hover:scale-125 transition">❌</button>
+                        <button onclick="delHist('${p.folio}')" title="Borrar" class="text-gray-500 hover:text-white transition">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        function filtrarHistorial(estado) { updateDashboard(estado); Swal.fire({toast:true, title:'Filtrando: '+estado, icon:'info', position:'top-end', timer:1000, showConfirmButton:false}); }
+        function renderHistorial() { updateDashboard(); } // Reset filtro
+
+        function cambiarEstado(folio, nuevoEstado){ const p = DB.proyectos.find(x => x.folio === folio); if(p){ p.estado = nuevoEstado; saveLocal(); updateDashboard(); Swal.fire({toast:true, position:'top-end', icon:'success', title:`Marcado como ${nuevoEstado}`, timer:1500, showConfirmButton:false}); } }
+        function delHist(f){ Swal.fire({title:'¿Borrar?',text:'No se podrá recuperar',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',background:'#000',color:'#fff'}).then(r=>{ if(r.isConfirmed){ DB.proyectos = DB.proyectos.filter(p => p.folio !== f); saveLocal(); updateDashboard(); } }); }
         
         function guardarPlantilla(){if(itemActual.materiales.length>0)Swal.fire({title:'Nombre',input:'text',background:'#000',color:'#fff'}).then(r=>{if(r.value){DB.plantillas.push({n:r.value,m:[...itemActual.materiales]});saveLocal();Swal.fire('Guardado');}});}
         function cargarPlantilla(){if(DB.plantillas.length===0)return Swal.fire('Sin plantillas');const o={};DB.plantillas.forEach((p,i)=>o[i]=p.n);Swal.fire({title:'Elegir',input:'select',inputOptions:o,background:'#000',color:'#fff'}).then(r=>{if(r.isConfirmed){itemActual.materiales=[...DB.plantillas[r.value].m];renderItemMat();}});}
-
         function verDashboard(){hideAll();document.getElementById('viewDashboard').classList.remove('hidden');updateDashboard();}
         function verCotizador(){hideAll();document.getElementById('viewCotizador').classList.remove('hidden');}
         function hideAll(){document.querySelectorAll('#adminPanel > div[id^="view"]').forEach(d=>d.classList.add('hidden'));}
+        function saveLocal(){ DB.catalogoPersonalizado = CAT; localStorage.setItem('celis_v16',JSON.stringify(DB)); }
+        function loadLocal(){ const d=localStorage.getItem('celis_v16'); if(d){ DB=JSON.parse(d); if(DB.catalogoPersonalizado && DB.catalogoPersonalizado.length > 0){ CAT = DB.catalogoPersonalizado; } } }
+        function abrirConfig(){document.getElementById('modalConfig').classList.remove('hidden');loadUI();}
+        function cerrarConfig(){document.getElementById('modalConfig').classList.add('hidden');}
+        function loadUI(){document.getElementById('conf_inflacion').value=DB.config.inflacion;document.getElementById('conf_url').value=DB.config.scriptURL||''; document.getElementById('conf_drive').value=DB.config.driveID||''; }
+        function guardarConfig(){ DB.config.inflacion=document.getElementById('conf_inflacion').value; DB.config.indirectos=document.getElementById('conf_indirectos').value; DB.config.scriptURL=document.getElementById('conf_url').value; DB.config.driveID=document.getElementById('conf_drive').value; const processFile = (id, key) => { const f = document.getElementById(id).files[0]; if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal();}; r.readAsDataURL(f); } }; processFile('conf_logo', 'logoBase64'); processFile('conf_codi', 'codiBase64'); setTimeout(()=>{saveLocal(); Swal.fire('Guardado'); cerrarConfig(); checkLogo();}, 500); }
+        async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB, driveID:DB.config.driveID})});Swal.fire('Respaldo enviado a Nube/Drive');}catch(e){Swal.fire('Error',e.message);}}
 
         async function generarPDFMaster(tipo){
             if(listaConceptosGlobal.length===0) return Swal.fire('Error','Agrega al menos un proyecto a la lista','error');
-            const { jsPDF } = window.jspdf; const doc = new jsPDF(); 
-            const cg = calcGlobal(); 
-            const fol = document.getElementById('p_folio').value;
-            const desglose = document.getElementById('chkDesglose').checked; 
-            
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); const cg = calcGlobal(); const fol = document.getElementById('p_folio').value; const desglose = document.getElementById('chkDesglose').checked; 
             if(DB.config.logoBase64) try{doc.addImage(DB.config.logoBase64,'PNG',10,10,25,25)}catch(e){}
-            doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.text(DATOS.nom,40,18);
-            doc.setFontSize(8); doc.setTextColor(80); doc.setFont("helvetica","normal");
-            doc.text(DATOS.slogan,40,23); doc.text(DATOS.dir,40,28); 
-            doc.text(`Tel: ${DATOS.tel} | RFC: ${DATOS.rfc}`,40,33); 
-            
-            doc.setFillColor(240); doc.rect(150,10,45,15,'F');
-            doc.setFontSize(12); doc.setTextColor(0,0,100); doc.text(fol,172,20,{align:'center'});
-            doc.line(10,38,200,38); doc.setFontSize(10); doc.setTextColor(0);
-            doc.text(`Cliente: ${document.getElementById('p_cliente').value}`,10,45);
-            doc.text(`Tel: ${document.getElementById('p_tel').value}`,100,45); doc.text(`Obra: ${document.getElementById('p_ubi').value}`,10,50);
-
+            doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.text(DATOS.nom,40,18); doc.setFontSize(8); doc.setTextColor(80); doc.setFont("helvetica","normal"); doc.text(DATOS.slogan,40,23); doc.text(DATOS.dir,40,28); doc.text(`Tel: ${DATOS.tel} | RFC: ${DATOS.rfc}`,40,33); 
+            doc.setFillColor(240); doc.rect(150,10,45,15,'F'); doc.setFontSize(12); doc.setTextColor(0,0,100); doc.text(fol,172,20,{align:'center'}); doc.line(10,38,200,38); doc.setFontSize(10); doc.setTextColor(0); doc.text(`Cliente: ${document.getElementById('p_cliente').value}`,10,45); doc.text(`Tel: ${document.getElementById('p_tel').value}`,100,45); doc.text(`Obra: ${document.getElementById('p_ubi').value}`,10,50);
             let y=60;
             if(tipo==='cliente'){
-                listaConceptosGlobal.forEach((c,i)=>{
-                    doc.setFont("helvetica","bold"); doc.setTextColor(0,51,102); doc.text(`${i+1}. ${c.tipo} (${c.ancho}x${c.alto}m)`,10,y); y+=5;
-                    doc.setFont("helvetica","normal"); doc.setTextColor(60); doc.text(c.desc,10,y); y+=5;
-                    if(desglose){
-                        let rows = c.mats.map(m=>[`  - ${m.n} (x${m.c})`, '']);
-                        rows.push(['Mano de Obra y Fabricación', '']);
-                        rows.push(['SUBTOTAL CONCEPTO', `$${c.subtotal.toFixed(2)}`]);
-                        doc.autoTable({startY:y, body:rows, theme:'plain', styles:{fontSize:9}});
-                    } else {
-                        doc.autoTable({startY:y,head:[['Descripción','Importe']],body:[['Suministro y Fabricación',`$${c.subtotal.toFixed(2)}`]],theme:'grid',styles:{fontSize:10}});
-                    }
-                    y=doc.lastAutoTable.finalY+8;
-                });
-                let startX = 140; doc.setFontSize(10); doc.setTextColor(0);
-                if(cg.fl>0){doc.text(`Flete: $${cg.fl.toFixed(2)}`,startX,y); y+=5;}
-                if(cg.ma>0){doc.text(`Maniobras: $${cg.ma.toFixed(2)}`,startX,y); y+=5;}
-                if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} 
-                doc.setFillColor(0,51,102); doc.rect(130,y,70,10,'F'); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(14);
-                doc.text(`TOTAL: $${cg.total.toFixed(2)}`,195,y+7,{align:'right'});
-                doc.setTextColor(0); doc.setFontSize(8); doc.setFont("helvetica","bold");
-                doc.text("DATOS DE PAGO:", 10, 250); doc.setFont("helvetica","normal");
-                doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta}`, 10, 255); doc.text(`CLABE: ${DATOS.clabe}`, 10, 260);
-                if(DB.config.codiBase64){try{doc.text("CODI:",130,250);doc.addImage(DB.config.codiBase64,'PNG',130,252,25,25);}catch(e){}}
+                listaConceptosGlobal.forEach((c,i)=>{ doc.setFont("helvetica","bold"); doc.setTextColor(0,51,102); doc.text(`${i+1}. ${c.tipo} (${c.ancho}x${c.alto}m)`,10,y); y+=5; doc.setFont("helvetica","normal"); doc.setTextColor(60); doc.text(c.desc,10,y); y+=5; if(desglose){ let rows = c.mats.map(m=>[`  - ${m.n} (x${m.c})`, '']); rows.push(['Mano de Obra y Fabricación', '']); rows.push(['SUBTOTAL CONCEPTO', `$${c.subtotal.toFixed(2)}`]); doc.autoTable({startY:y, body:rows, theme:'plain', styles:{fontSize:9}}); } else { doc.autoTable({startY:y,head:[['Descripción','Importe']],body:[['Suministro y Fabricación',`$${c.subtotal.toFixed(2)}`]],theme:'grid',styles:{fontSize:10}}); } y=doc.lastAutoTable.finalY+8; });
+                let startX = 140; doc.setFontSize(10); doc.setTextColor(0); if(cg.fl>0){doc.text(`Flete: $${cg.fl.toFixed(2)}`,startX,y); y+=5;} if(cg.ma>0){doc.text(`Maniobras: $${cg.ma.toFixed(2)}`,startX,y); y+=5;} if(cg.desc>0){ doc.setTextColor(200,0,0); doc.text(`Descuento: -$${cg.desc.toFixed(2)}`,startX,y); doc.setTextColor(0); y+=5; } if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} 
+                doc.setFillColor(0,51,102); doc.rect(130,y,70,10,'F'); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(`TOTAL: $${cg.total.toFixed(2)}`,195,y+7,{align:'right'}); doc.setTextColor(0); doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.text("DATOS DE PAGO:", 10, 250); doc.setFont("helvetica","normal"); doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta}`, 10, 255); doc.text(`CLABE: ${DATOS.clabe}`, 10, 260); if(DB.config.codiBase64){try{doc.text("CODI:",130,250);doc.addImage(DB.config.codiBase64,'PNG',130,252,25,25);}catch(e){}}
             } else {
-                listaConceptosGlobal.forEach((c,i)=>{
-                    doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5;
-                    let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10;
-                });
+                listaConceptosGlobal.forEach((c,i)=>{ doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5; let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10; });
             }
             doc.save(`${fol}_${tipo}.pdf`);
         }
-
-        // STORAGE & CONFIG
-        function saveLocal(){
-            // Guardamos CAT en DB para que los precios nuevos NO se pierdan al cerrar
-            DB.catalogoPersonalizado = CAT;
-            localStorage.setItem('celis_v16',JSON.stringify(DB));
-        }
-        function loadLocal(){
-            const d=localStorage.getItem('celis_v16');
-            if(d){
-                DB=JSON.parse(d);
-                // Si ya guardamos precios personalizados, los usamos
-                if(DB.catalogoPersonalizado && DB.catalogoPersonalizado.length > 0){
-                    CAT = DB.catalogoPersonalizado;
-                }
-            }
-        }
-        function abrirConfig(){document.getElementById('modalConfig').classList.remove('hidden');loadUI();}
-        function cerrarConfig(){document.getElementById('modalConfig').classList.add('hidden');}
-        function loadUI(){document.getElementById('conf_inflacion').value=DB.config.inflacion;document.getElementById('conf_url').value=DB.config.scriptURL||'';
-            if(DB.config.logoBase64)document.getElementById('imgLogoPreview').src=DB.config.logoBase64;
-            if(DB.config.codiBase64)document.getElementById('imgCodiPreview').src=DB.config.codiBase64;
-        }
-        function guardarConfig(){
-            DB.config.inflacion=document.getElementById('conf_inflacion').value;
-            DB.config.indirectos=document.getElementById('conf_indirectos').value;
-            DB.config.scriptURL=document.getElementById('conf_url').value;
-            const processFile = (id, key) => { const f = document.getElementById(id).files[0]; if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal();}; r.readAsDataURL(f); } };
-            processFile('conf_logo', 'logoBase64'); processFile('conf_codi', 'codiBase64');
-            setTimeout(()=>{saveLocal(); Swal.fire('Guardado'); cerrarConfig(); checkLogo();}, 500);
-        }
-        async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB})});Swal.fire('Enviado');}catch(e){Swal.fire('Error',e.message);}}
     </script>
 </body>
 </html>
