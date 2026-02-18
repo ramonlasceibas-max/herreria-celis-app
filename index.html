@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Herrería Celis | System V17.0 PWA</title>
+    <title>Herrería Celis | System V34.0 Stable</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00E5FF">
@@ -18,7 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* ESTILO DARK NEON LUXURY */
+        /* ESTILO ORIGINAL V17 (NO TOCAR) */
         :root { --bg: #050505; --glass: rgba(20, 20, 20, 0.95); --neon: #00E5FF; }
         body { background-color: var(--bg); color: #e0e0e0; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; }
         #sparksCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
@@ -37,14 +37,16 @@
         .toggle-switch:checked { background: var(--neon); }
         .toggle-switch:checked::after { transform: translateX(20px); background: #000; }
         .card-hover:hover { transform: translateY(-2px); box-shadow: 0 0 15px rgba(0, 229, 255, 0.3); border-color: var(--neon); cursor: pointer; }
+        
+        /* Switch Cobro Nuevo */
+        .switch-cobro:checked + div { background-color: #00E5FF; }
+        .switch-cobro:checked + div::after { transform: translateX(100%); background-color: white; }
     </style>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('App Instalable Lista: ', reg.scope))
-                    .catch(err => console.log('Fallo SW: ', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Fallo SW: ', err));
             });
         }
     </script>
@@ -55,8 +57,7 @@
     <div id="landingPage" class="min-h-screen flex flex-col items-center justify-center p-4 relative">
         <div class="text-center mb-10 cursor-pointer select-none group" onclick="intentarAdmin()">
             <div id="logoContainer" class="w-32 h-32 mx-auto mb-6 rounded-full border-2 border-[#00E5FF] flex items-center justify-center bg-black shadow-[0_0_30px_rgba(0,229,255,0.2)] overflow-hidden">
-                <img src="./logo.png" class="w-full h-full object-contain p-2">
-                <img id="landingLogoImg" src="" class="w-full h-full object-cover hidden">
+                <img src="./logo.png" class="w-full h-full object-contain p-2" id="landingLogoImg" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2504/2504936.png'">
             </div>
             <h1 class="text-4xl md:text-6xl font-black text-white mb-2">HERRERÍA <span class="text-[#00E5FF]">CELIS</span></h1>
             <p class="text-gray-400 text-xs tracking-[0.3em] uppercase">ARQUITECTURA Y FUERZA EN ACERO</p>
@@ -77,8 +78,10 @@
     <div id="adminPanel" class="hidden min-h-screen p-2 md:p-4 fade-in">
         <div class="flex justify-between items-center mb-4 glass-card p-3 sticky top-0 z-40 bg-black/90">
             <div class="flex items-center gap-2 cursor-pointer" onclick="salirAdmin()">
-                <div class="w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center text-black font-bold">HC</div>
-                <div><h2 class="text-white font-bold text-sm">V17.0 APP</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
+                <div class="w-8 h-8 rounded-full bg-[#00E5FF] flex items-center justify-center text-black font-bold overflow-hidden">
+                     <img src="./logo.png" id="adminLogoImg" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentNode.innerText='HC'">
+                </div>
+                <div><h2 class="text-white font-bold text-sm">V34.0 APP</h2><span class="text-[9px] text-[#00E5FF]">ADMINISTRADOR</span></div>
             </div>
             <div class="flex gap-2">
                 <button onclick="sincronizarNube()" class="btn-neon px-2 text-xs" title="Respaldo Drive"><i class="fas fa-cloud"></i></button>
@@ -89,8 +92,8 @@
 
         <div id="viewDashboard" class="max-w-6xl mx-auto">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div onclick="filtrarHistorial('Vendido')" class="glass-card p-4 border-l-4 border-[#00E5FF] card-hover">
-                    <p class="text-gray-500 text-[10px] uppercase">Ventas</p>
+                <div onclick="filtrarHistorial('Aprobado')" class="glass-card p-4 border-l-4 border-green-500 card-hover">
+                    <p class="text-gray-500 text-[10px] uppercase">Aprobados</p>
                     <h3 class="text-xl font-bold text-white" id="statVentas">$0.00</h3>
                 </div>
                 <div onclick="filtrarHistorial('Pendiente')" class="glass-card p-4 border-l-4 border-yellow-500 card-hover">
@@ -147,9 +150,15 @@
                         <div class="bg-black p-3 rounded mb-3 border border-gray-800">
                             <div class="flex justify-between mb-1">
                                 <label class="text-[10px] text-gray-500 uppercase">Materiales</label>
-                                <span class="text-xs font-bold text-green-400">Costo Material: <span id="lblMonitorMateriales">$0.00</span></span>
+                                <span class="text-xs font-bold text-green-400">Costo: <span id="lblMonitorMateriales">$0.00</span></span>
                             </div>
-                            <div class="flex gap-2 mb-2">
+
+                            <button onclick="abrirArmador()" class="w-full bg-gradient-to-r from-gray-800 to-gray-900 border border-green-600 text-green-400 font-bold py-3 rounded-lg mb-3 hover:from-green-900 hover:to-black transition shadow-[0_0_15px_rgba(34,197,94,0.2)] flex items-center justify-center gap-2 uppercase text-xs">
+                                <i class="fas fa-hammer"></i> Abrir Armador de Despiece (Multi-Material)
+                            </button>
+
+                            <div class="flex gap-2 mb-2 border-t border-gray-800 pt-2">
+                                <span class="text-[9px] text-gray-500 self-center">Suelto:</span>
                                 <input list="listaMateriales" id="inputBusquedaMat" class="input-celis text-xs w-full" placeholder="Buscar material...">
                                 <datalist id="listaMateriales"></datalist>
                                 <button onclick="crearMaterial()" class="btn-neon px-2 text-[10px] border-green-500 text-green-500 hover:bg-green-500" title="Nuevo">+</button>
@@ -158,16 +167,55 @@
                             </div>
                             <div class="flex gap-2 mb-2">
                                 <input type="number" id="mat_cant" class="input-celis w-20 text-center font-bold text-xs" value="1" placeholder="Cant">
-                                <button onclick="addMaterialToItem()" class="btn-primary py-1 px-4 w-full text-xs">AGREGAR MATERIAL</button>
+                                <button onclick="addMaterialToItem()" class="btn-primary py-1 px-4 w-full text-xs">AGREGAR</button>
                             </div>
                             <div class="h-32 overflow-y-auto border border-gray-800 rounded p-1"><table class="w-full text-[10px] text-gray-400"><tbody id="listaMaterialesTemp"></tbody></table></div>
                         </div>
 
-                        <div class="grid grid-cols-3 gap-2 mb-3">
-                            <div><label class="text-[9px] text-gray-500">Mano Obra</label><input type="number" id="item_mo" class="input-celis text-right text-xs" value="0"></div>
-                            <div><label class="text-[9px] text-gray-500">Instalación</label><input type="number" id="item_inst" class="input-celis text-right text-xs" value="0"></div>
-                            <div><label class="text-[9px] text-gray-500">Dificultad</label><select id="item_dif" class="input-celis text-xs"><option value="1">x1</option><option value="1.15">x1.15</option><option value="1.3">x1.3</option></select></div>
+                        <div class="bg-gray-900 p-3 rounded mb-3 border border-gray-800 relative">
+                            <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
+                                <span class="text-[#00E5FF] text-xs font-bold uppercase">Método de Cobro</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-gray-400">Auto</span>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="chkModoCobro" class="sr-only peer switch-cobro" onchange="toggleMetodoCobro()">
+                                        <div class="w-9 h-5 bg-gray-600 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                                    </label>
+                                    <span class="text-[10px] text-gray-400">Manual</span>
+                                </div>
+                            </div>
+
+                            <div id="panelCobroAuto" class="fade-in mb-3">
+                                <label class="text-[10px] text-yellow-500 uppercase font-bold block mb-1">Multiplicador</label>
+                                <select id="cmbMultiplicador" class="input-celis text-xs w-full bg-black border-yellow-900">
+                                    <option value="2.5" selected>Cobro Maestro (x2.5 - 150%)</option>
+                                    <option value="2.0">Cobro Estándar (x2.0 - 100%)</option>
+                                    <option value="3.0">Cobro Industrial (x3.0 - 200%)</option>
+                                    <option value="1.0">Solo Material (x1.0)</option>
+                                </select>
+                            </div>
+
+                            <div id="panelCobroManual" class="hidden fade-in grid grid-cols-2 gap-3 mb-3">
+                                <div><label class="text-[9px] text-gray-500">Mano de Obra ($)</label><input type="number" id="item_mo" class="input-celis text-right text-xs" value="0"></div>
+                                <div><label class="text-[9px] text-gray-500">Instalación ($)</label><input type="number" id="item_inst" class="input-celis text-right text-xs" value="0"></div>
+                                <div><label class="text-[9px] text-gray-500">Consumibles ($)</label><input type="number" id="item_herra" class="input-celis text-right text-xs" value="0"></div>
+                                <div><label class="text-[9px] text-orange-400 font-bold">Indirectos ($)</label><input type="number" id="item_ind" class="input-celis text-right text-xs border-orange-900" value="0"></div>
+                                <div class="col-span-2">
+                                    <label class="text-[9px] text-gray-500">Dificultad (Afecta Mano de Obra)</label>
+                                    <select id="item_dif" class="input-celis text-xs w-full">
+                                        <option value="1">Normal</option>
+                                        <option value="1.15">Detallado (+15%)</option>
+                                        <option value="1.3">Complejo (+30%)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t border-gray-700 pt-2 grid grid-cols-2 gap-2">
+                                <div><label class="text-[9px] text-gray-500 uppercase">Flete ($)</label><input type="number" id="global_flete" class="input-celis text-right text-xs" value="0" onchange="calcGlobal()"></div>
+                                <div><label class="text-[9px] text-yellow-500 uppercase">Maniobras ($)</label><input type="number" id="global_mani" class="input-celis text-right text-xs border-yellow-900" value="0" onchange="calcGlobal()"></div>
+                            </div>
                         </div>
+
                         <button onclick="agregarConceptoALista()" class="w-full bg-[#00E5FF] text-black font-bold py-3 rounded text-xs hover:bg-white transition uppercase shadow-lg shadow-cyan-500/20">
                             <i class="fas fa-plus-circle mr-2"></i> 2. Agregar Proyecto a la Lista
                         </button>
@@ -184,10 +232,6 @@
                         </div>
                         <div class="mt-4 border-t border-gray-800 pt-2">
                             <div class="flex justify-between text-xs text-gray-400 mb-1"><span>Subtotal:</span> <span id="lblGlobalSub">$0.00</span></div>
-                            <div class="grid grid-cols-2 gap-2 mb-2">
-                                <div><label class="text-[9px] text-gray-500">Flete</label><input type="number" id="global_flete" class="input-celis text-right text-xs p-1" value="0" onchange="calcGlobal()"></div>
-                                <div><label class="text-[9px] text-yellow-500">Maniobras</label><input type="number" id="global_mani" class="input-celis text-right text-xs p-1 border-yellow-900" value="0" onchange="calcGlobal()"></div>
-                            </div>
                             <div class="mb-2">
                                 <label class="text-[9px] text-red-500 font-bold">DESCUENTO</label>
                                 <input type="number" id="global_desc" class="input-celis text-right text-xs p-1 border-red-900 text-red-400" value="0" onchange="calcGlobal()" placeholder="0.00">
@@ -214,10 +258,10 @@
                                 <button onclick="generarPDFMaster('cliente')" class="btn-primary text-xs w-full">PDF Cliente</button>
                                 <button onclick="generarPDFMaster('taller')" class="btn-neon text-xs w-full">PDF Taller</button>
                             </div>
-                            <button onclick="calcularListaCompra()" class="w-full mb-2 bg-gray-800 text-white border border-gray-600 hover:bg-white hover:text-black transition text-xs font-bold py-2 rounded">
-                                <i class="fas fa-list-ol mr-2"></i> 📋 LISTA DE COMPRA
+                            <button onclick="generarPDFListaCompra()" class="w-full mb-2 bg-gray-800 text-white border border-gray-600 hover:bg-white hover:text-black transition text-xs font-bold py-2 rounded">
+                                <i class="fas fa-list-ol mr-2"></i> 📋 DESCARGAR LISTA COMPRA (PDF)
                             </button>
-                            <button onclick="guardarPresupuestoGlobal()" class="w-full mt-2 text-green-500 text-xs underline font-bold hover:text-white">💾 GUARDAR PROGRESO</button>
+                            <button onclick="guardarPresupuestoGlobal()" class="w-full mt-2 text-green-500 text-xs underline font-bold hover:text-white">💾 GUARDAR Y SALIR</button>
                         </div>
                     </div>
                 </div>
@@ -231,45 +275,60 @@
             <h2 class="text-2xl font-bold text-white mb-1">Tu Proyecto</h2>
             <div id="step1" class="step-content fade-in">
                 <label class="text-[#00E5FF] text-xs font-bold">Tu Nombre</label><input id="cli_nombre" class="input-celis mb-4">
-                <label class="text-[#00E5FF] text-xs font-bold">Ubicación</label><input id="cli_ubi" class="input-celis mb-6">
+                <label class="text-[#00E5FF] text-xs font-bold">Ubicación</label><input id="cli_ubi" class="input-celis mb-4">
+                <label class="text-[#00E5FF] text-xs font-bold">Teléfono</label><input id="cli_tel" class="input-celis mb-6">
                 <button onclick="nextStep(2)" class="btn-primary w-full">Siguiente</button>
             </div>
             <div id="step2" class="step-content hidden fade-in">
                 <label class="text-[#00E5FF] text-xs font-bold">Tipo</label><select id="cli_tipo" class="input-celis mb-4"><option>Portón</option><option>Puerta</option><option>Ventana</option><option>Techumbre</option></select>
                 <label class="text-[#00E5FF] text-xs font-bold">Detalles</label><textarea id="cli_detalles" class="input-celis mb-6" rows="3"></textarea>
-                <div class="flex gap-2"><button onclick="nextStep(1)" class="btn-neon w-1/3">Atrás</button><button onclick="nextStep(3)" class="btn-primary w-2/3">Siguiente</button></div>
+                <div class="flex gap-2"><button onclick="nextStep(1)" class="btn-neon w-1/3">Atrás</button><button onclick="enviarWhatsAppCliente()" class="btn-primary w-2/3 bg-green-600">ENVIAR</button></div>
             </div>
-            <div id="step3" class="step-content hidden fade-in">
-                <div class="flex items-center gap-3 mb-4 bg-gray-900 p-2 rounded"><input type="checkbox" id="chkFacturaCli"><span class="text-xs">Requiero Factura</span></div>
-                <div id="boxFacturaCliente" class="hidden mb-4"><input id="f_rfc" class="input-celis" placeholder="RFC"></div>
-                <button onclick="enviarWhatsAppCliente()" class="btn-primary w-full bg-green-600">ENVIAR SOLICITUD</button>
+        </div>
+    </div>
+
+    <div id="modalArmador" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm" style="z-index: 100;">
+        <div class="glass-card w-full max-w-lg p-6 bg-gray-900 border border-green-600 h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+                <h2 class="text-green-400 font-bold text-lg"><i class="fas fa-hammer"></i> Armador de Despiece</h2>
+                <button onclick="document.getElementById('modalArmador').classList.add('hidden')" class="text-gray-500 hover:text-white"><i class="fas fa-times text-xl"></i></button>
             </div>
+            <p class="text-[10px] text-gray-400 mb-3">Agrega componentes (Marcos, Hojas). Si pones Ancho y Alto, el sistema calcula perímetro.</p>
+            <div class="bg-black p-3 rounded mb-3 border border-gray-700">
+                <div class="flex gap-2 mb-2"><input list="listaMateriales" id="armador_mat_search" class="input-celis text-xs w-full" placeholder="Buscar material (ej. P-400)..."></div>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                    <div><label class="text-[9px] text-gray-500 text-green-300">Ancho (m)</label><input type="number" id="armador_ancho" class="input-celis text-center text-xs" placeholder="0"></div>
+                    <div><label class="text-[9px] text-gray-500 text-green-300">Alto (m)</label><input type="number" id="armador_alto" class="input-celis text-center text-xs" placeholder="0"></div>
+                    <div><label class="text-[9px] text-gray-500">Cantidad</label><input type="number" id="armador_cant" class="input-celis text-center text-xs" value="1"></div>
+                </div>
+                <button onclick="agregarAlArmador()" class="btn-primary w-full text-[10px] py-2 bg-green-600 border-none">AGREGAR COMPONENTE</button>
+            </div>
+            <div class="flex-1 overflow-y-auto border border-gray-800 rounded p-2 bg-black mb-3">
+                <table class="w-full text-xs text-left">
+                    <thead class="text-gray-500 border-b border-gray-800"><tr><th>Mat</th><th>Detalle</th><th class="text-right">Acción</th></tr></thead>
+                    <tbody id="listaArmador" class="text-gray-300"></tbody>
+                </table>
+            </div>
+            <button onclick="procesarArmador()" class="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-3 rounded shadow-lg transition uppercase text-xs">
+                <i class="fas fa-check-double"></i> TERMINAR Y TRANSFERIR
+            </button>
         </div>
     </div>
 
     <div id="modalOptimizador" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm" style="z-index: 99999;">
         <div class="glass-card w-full max-w-sm p-6 bg-black border border-purple-500">
-            <h2 class="text-purple-500 font-bold mb-4"><i class="fas fa-ruler-combined"></i> Calculadora de Cortes</h2>
+            <h2 class="text-purple-500 font-bold mb-4">Calculadora Cortes</h2>
             <label class="text-xs text-gray-400">¿Qué vas a armar?</label>
             <input id="opt_concepto" class="input-celis mb-2" placeholder="Ej: Marco Ventana">
-            <div class="grid grid-cols-2 gap-2 mb-2">
-                <div><label class="text-xs text-gray-400">Alto (m)</label><input type="number" id="opt_alto" class="input-celis"></div>
-                <div><label class="text-xs text-gray-400">Ancho (m)</label><input type="number" id="opt_ancho" class="input-celis"></div>
-            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2"><div><label class="text-xs text-gray-400">Alto (m)</label><input type="number" id="opt_alto" class="input-celis"></div><div><label class="text-xs text-gray-400">Ancho (m)</label><input type="number" id="opt_ancho" class="input-celis"></div></div>
             <label class="text-xs text-gray-400">Material</label>
             <input id="opt_material" class="input-celis mb-4" placeholder="Ej: P-150">
-            <div id="opt_resultado" class="hidden p-3 bg-gray-900 rounded mb-4 text-xs">
-                <p class="text-white">Perímetro Total: <span id="opt_res_m" class="text-[#00E5FF] font-bold">0m</span></p>
-                <p class="text-white">Tramos (6m): <span id="opt_res_tramos" class="text-yellow-500 font-bold text-lg">0</span></p>
-                <p class="text-gray-500 italic" id="opt_res_sobra">Sobra: 0m</p>
-            </div>
-            <button onclick="calcularOptimizacion()" class="btn-neon w-full mb-2 border-purple-500 text-purple-500">CALCULAR</button>
-            <button onclick="agregarOptimizado()" class="btn-primary w-full hidden" id="btnAddOpt">AGREGAR A LISTA</button>
-            <button onclick="document.getElementById('modalOptimizador').classList.add('hidden')" class="text-gray-500 text-xs w-full mt-2">Cerrar</button>
+            <div id="opt_resultado" class="hidden p-3 bg-gray-900 rounded mb-4 text-xs"><p class="text-white">Total: <span id="opt_res_m" class="text-[#00E5FF] font-bold">0m</span></p><p class="text-white">Tramos: <span id="opt_res_tramos" class="text-yellow-500 font-bold text-lg">0</span></p></div>
+            <button onclick="calcularOptimizacion()" class="btn-neon w-full mb-2 border-purple-500 text-purple-500">CALCULAR</button><button onclick="agregarOptimizado()" class="btn-primary w-full hidden" id="btnAddOpt">AGREGAR A LISTA</button><button onclick="document.getElementById('modalOptimizador').classList.add('hidden')" class="text-gray-500 text-xs w-full mt-2">Cerrar</button>
         </div>
     </div>
 
-    <div id="modalConfig" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="modalConfig" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm" style="z-index:1000;">
         <div class="glass-card w-full max-w-sm p-6 border border-gray-700 bg-black">
             <h2 class="text-white font-bold mb-4">Configuración</h2>
             <div class="space-y-3">
@@ -304,62 +363,143 @@
     </div>
 
     <script>
-        let DB={config:{inflacion:0,indirectos:10,rol:'A',folioCount:1000,scriptURL:'',driveID:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[], tipos:[]};
+        const DATOS = {
+            nom: "HERRERÍA CELIS",
+            slogan: "Hecho a medida. Hecho para durar. Desde 1992.",
+            desc: "A sus ordenes en todo lo relacionado a la herreria colonial, moderna y estructural.",
+            prop: "Catalina Díaz Díaz",
+            rfc: "DIDC741216E97",
+            curp: "DIDC741216MMSZZT06",
+            email: "herreria_celis@hotmail.com",
+            tel: "(777) 220 02 88",
+            wa: "56 4582 6729",
+            dir: "Carr. Zapata-Tezoyuca Km. 3.5 Col. El Vigilante Emiliano Zapata, Mor.",
+            regimen: "Persona Física con actividad de régimen simplificado de confianza"
+        };
+        let DB={config:{inflacion:0,indirectos:0,rol:'A',folioCount:1000,scriptURL:'',driveID:'',logoBase64:'',codiBase64:''},proyectos:[],plantillas:[], tipos:[]};
         let listaConceptosGlobal=[], itemActual={materiales:[]};
-        const DATOS={nom:"HERRERÍA CELIS",slogan:"ARQUITECTURA Y FUERZA EN ACERO",dir:"Carretera Zapata-Tezoyuca km 3.5, Emiliano Zapata, Morelos",tel:"777 220 0288",wa:"56 4582 6729",rfc:"XAXX010101000",banco:"BBVA",cuenta:"XXXX-XXXX-XXXX",clabe:"XXXXXXXXXXXXXXXXXX"};
+        let armadoTemporal = [];
         let CAT=[{n:"PTR 4x4 Verde",p:1200},{n:"PTR 2x2 Verde",p:600},{n:"PTR 1x1 C-14",p:350},{n:"Ángulo 1/8 x 1 1/2",p:350},{n:"Solera 3/16 x 2",p:280},{n:"Lámina Cal 18",p:1500},{n:"Riel 1500",p:800},{n:"Carretillas",p:150},{n:"Bisagra Tubular",p:45},{n:"Chapa Residential",p:450},{n:"Electrodo Kg",p:85},{n:"Primer Lt",p:180},{n:"Esmalte Lt",p:220},{n:"Thinner",p:40},{n:"Disco Corte",p:25},{n:"Gasolina Lt",p:25}];
 
         window.onload=()=>{ loadLocal();renderCat();renderTipos();renderHistorial();checkLogo();initSparks(); };
 
-        function initSparks() {
-            const c=document.getElementById('sparksCanvas'), x=c.getContext('2d');
-            let w,h,p=[]; const resize=()=>{w=c.width=window.innerWidth;h=c.height=window.innerHeight;}; window.addEventListener('resize',resize); resize();
-            class P{constructor(){this.reset();}reset(){this.x=Math.random()*w;this.y=Math.random()*-h;this.vx=(Math.random()-0.5);this.vy=Math.random()*2+1;this.size=Math.random()*2;this.color=Math.random()>0.5?'#FFD700':'#FF4500';this.life=1;}update(){this.x+=this.vx;this.y+=this.vy;if(this.y>h)this.reset();}draw(){x.fillStyle=this.color;x.globalAlpha=Math.random()*0.5+0.2;x.beginPath();x.arc(this.x,this.y,this.size,0,Math.PI*2);x.fill();}}
-            for(let i=0;i<40;i++)p.push(new P());
-            function a(){x.clearRect(0,0,w,h);p.forEach(z=>{z.update();z.draw();});requestAnimationFrame(a);} a();
-        }
+        function initSparks() { const c=document.getElementById('sparksCanvas'), x=c.getContext('2d'); let w,h,p=[]; const resize=()=>{w=c.width=window.innerWidth;h=c.height=window.innerHeight;}; window.addEventListener('resize',resize); resize(); class P{constructor(){this.reset();}reset(){this.x=Math.random()*w;this.y=Math.random()*-h;this.vx=(Math.random()-0.5);this.vy=Math.random()*2+1;this.size=Math.random()*2;this.color=Math.random()>0.5?'#FFD700':'#FF4500';this.life=1;}update(){this.x+=this.vx;this.y+=this.vy;if(this.y>h)this.reset();}draw(){x.fillStyle=this.color;x.globalAlpha=Math.random()*0.5+0.2;x.beginPath();x.arc(this.x,this.y,this.size,0,Math.PI*2);x.fill();}} for(let i=0;i<40;i++)p.push(new P()); function a(){x.clearRect(0,0,w,h);p.forEach(z=>{z.update();z.draw();});requestAnimationFrame(a);} a(); }
 
-        // --- OPTIMIZADOR ---
-        function abrirOptimizador(){document.getElementById('modalOptimizador').classList.remove('hidden');}
-        function calcularOptimizacion(){
-            const h = parseFloat(document.getElementById('opt_alto').value)||0; const w = parseFloat(document.getElementById('opt_ancho').value)||0;
-            if(h===0 || w===0) return;
-            const perimetro = (h*2) + (w*2); const tramoStd = 6.0; const tramos = Math.ceil(perimetro / tramoStd); const sobrante = (tramos * tramoStd) - perimetro;
-            document.getElementById('opt_res_m').innerText = perimetro.toFixed(2) + 'm'; document.getElementById('opt_res_tramos').innerText = tramos; document.getElementById('opt_res_sobra').innerText = `Sobran: ${sobrante.toFixed(2)}m (Retacería)`;
-            document.getElementById('opt_resultado').classList.remove('hidden'); document.getElementById('btnAddOpt').classList.remove('hidden');
-        }
-        function agregarOptimizado(){
-            const mat = document.getElementById('opt_material').value || "Perfil Estructura"; const tramos = parseFloat(document.getElementById('opt_res_tramos').innerText);
-            let precio = 0; const matObj = CAT.find(x => x.n.toLowerCase().includes(mat.toLowerCase()));
-            if(matObj) precio = matObj.p; else Swal.fire('Material nuevo', 'Define el precio unitario de: '+mat, 'question').then(()=>{});
-            itemActual.materiales.push({n: mat + " (Tramos 6m)", p: precio, c: tramos}); renderItemMat();
-            document.getElementById('modalOptimizador').classList.add('hidden'); Swal.fire({toast:true, icon:'success', title:'Agregado a la lista', position:'top-end', showConfirmButton:false, timer:1500});
-        }
-
-        // --- CORE ---
         let cc=0; function intentarAdmin(){cc++;if(cc===3){cc=0;Swal.fire({title:'Admin',input:'password',background:'#000',color:'#fff',confirmButtonColor:'#00E5FF',preConfirm:p=>p==='admin123'}).then(r=>{if(r.isConfirmed){document.getElementById('landingPage').classList.add('hidden');document.getElementById('adminPanel').classList.remove('hidden');updateDashboard();checkLogo();}})}}
         function salirAdmin(){document.getElementById('adminPanel').classList.add('hidden');document.getElementById('landingPage').classList.remove('hidden');}
-        function checkLogo(){ if(DB.config.logoBase64 && DB.config.logoBase64.length>50){ document.getElementById('defaultIcon').classList.add('hidden'); document.getElementById('landingLogoImg').src=DB.config.logoBase64; document.getElementById('landingLogoImg').classList.remove('hidden'); } }
+        
+        function checkLogo(){ 
+            if(DB.config.logoBase64 && DB.config.logoBase64.length > 50) { 
+                document.getElementById('landingLogoImg').src = DB.config.logoBase64; 
+                document.getElementById('adminLogoImg').src = DB.config.logoBase64; 
+            } 
+        }
 
-        function abrirCotizadorCliente(){document.getElementById('modalCliente').classList.remove('hidden');nextStep(1);}
-        function cerrarCotizadorCliente(){document.getElementById('modalCliente').classList.add('hidden');}
-        function nextStep(s){document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden'));document.getElementById(`step${s}`).classList.remove('hidden');}
-        function enviarWhatsAppCliente(){ const n = document.getElementById('cli_nombre').value; const m = `👋 Hola Herrería Celis, soy *${n}*. Interés: ${document.getElementById('cli_tipo').value}. ${document.getElementById('cli_detalles').value}`; window.location.href = `https://api.whatsapp.com/send?phone=5215645826729&text=${encodeURIComponent(m)}`; setTimeout(cerrarCotizadorCliente, 1000); }
+        // --- BOTONES CLIENTE RESTAURADOS ---
+        function abrirCotizadorCliente(){ document.getElementById('modalCliente').classList.remove('hidden'); nextStep(1); }
+        function cerrarCotizadorCliente(){ document.getElementById('modalCliente').classList.add('hidden'); }
+        function nextStep(s){ document.querySelectorAll('.step-content').forEach(e=>e.classList.add('hidden')); document.getElementById(`step${s}`).classList.remove('hidden'); }
+        function enviarWhatsAppCliente(){ const n = document.getElementById('cli_nombre').value; const m = `👋 Hola ${DATOS.nom}, soy *${n}*. Mi teléfono es ${document.getElementById('cli_tel').value}. Ubicación: ${document.getElementById('cli_ubi').value}. Interés: ${document.getElementById('cli_tipo').value}. Detalles: ${document.getElementById('cli_detalles').value}`; window.location.href = `https://api.whatsapp.com/send?phone=${DATOS.wa.replace(/\s/g,'')}&text=${encodeURIComponent(m)}`; setTimeout(cerrarCotizadorCliente, 1000); }
 
+        function abrirConfig(){document.getElementById('modalConfig').classList.remove('hidden');loadUI();}
+        function cerrarConfig(){document.getElementById('modalConfig').classList.add('hidden');}
+        function loadUI(){document.getElementById('conf_inflacion').value=DB.config.inflacion;document.getElementById('conf_url').value=DB.config.scriptURL||''; document.getElementById('conf_drive').value=DB.config.driveID||''; }
+        function guardarConfig(){ DB.config.inflacion=document.getElementById('conf_inflacion').value; DB.config.indirectos=document.getElementById('conf_indirectos').value; DB.config.scriptURL=document.getElementById('conf_url').value; DB.config.driveID=document.getElementById('conf_drive').value; const processFile = (id, key) => { const f = document.getElementById(id).files[0]; if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal(); location.reload();}; r.readAsDataURL(f); } }; processFile('conf_logo', 'logoBase64'); processFile('conf_codi', 'codiBase64'); setTimeout(()=>{saveLocal(); Swal.fire('Guardado'); cerrarConfig(); checkLogo();}, 500); }
+
+        // --- ARMADOR Y CALCULADORA NUEVA ---
+        function abrirArmador(){ armadoTemporal = []; renderArmadorList(); document.getElementById('modalArmador').classList.remove('hidden'); }
+        function agregarAlArmador(){
+            const matName = document.getElementById('armador_mat_search').value; const matObj = CAT.find(x => x.n === matName);
+            if(!matObj) return Swal.fire('Error', 'Material no encontrado', 'error');
+            const ancho = parseFloat(document.getElementById('armador_ancho').value) || 0; 
+            const alto = parseFloat(document.getElementById('armador_alto').value) || 0;   
+            const cant = parseFloat(document.getElementById('armador_cant').value) || 1;
+            armadoTemporal.push({ n: matObj.n, p: matObj.p, a: ancho, l: alto, c: cant }); 
+            document.getElementById('armador_mat_search').value = ''; document.getElementById('armador_ancho').value = ''; document.getElementById('armador_alto').value = ''; document.getElementById('armador_cant').value = '1'; document.getElementById('armador_mat_search').focus();
+            renderArmadorList();
+        }
+        function renderArmadorList(){
+            const tbody = document.getElementById('listaArmador');
+            tbody.innerHTML = armadoTemporal.map((item, i) => {
+                const medidas = item.a > 0 ? `${item.a}x${item.l}m` : `${item.l}m`;
+                return `<tr class="border-b border-gray-800"><td class="py-1">${item.n}</td><td>${item.c} x ${medidas}</td><td class="text-right"><button onclick="armadoTemporal.splice(${i},1);renderArmadorList()" class="text-red-500">x</button></td></tr>`;
+            }).join('');
+        }
+        function procesarArmador(){
+            if(armadoTemporal.length === 0) return Swal.fire('Vacío', 'Agrega componentes', 'warning');
+            armadoTemporal.forEach(item => itemActual.materiales.push(item));
+            renderItemMat(); document.getElementById('modalArmador').classList.add('hidden');
+            Swal.fire({toast:true, icon:'success', title:'Procesado', position:'top-end', timer:1500, showConfirmButton:false});
+        }
+
+        // --- CALCULADORA PRINCIPAL Y COBRO ---
         function renderCat(){document.getElementById('listaMateriales').innerHTML=CAT.map(m=>`<option value="${m.n}">$${m.p}</option>`).join('');}
         function crearMaterial(){ Swal.fire({ title: 'Nuevo Material', html: '<input id="swal-input1" class="swal2-input" placeholder="Nombre">' + '<input id="swal-input2" class="swal2-input" placeholder="Precio" type="number">', focusConfirm: false, background: '#000', color: '#fff', confirmButtonColor:'#00E5FF', preConfirm: () => { return [document.getElementById('swal-input1').value, document.getElementById('swal-input2').value] } }).then((result) => { if(result.value && result.value[0] && result.value[1]){ const nombre = result.value[0]; const precio = parseFloat(result.value[1]); CAT.push({n: nombre, p: precio}); saveLocal(); renderCat(); document.getElementById('inputBusquedaMat').value = nombre; Swal.fire({toast:true, position:'top-end', icon:'success', title:'Agregado', timer:1500, showConfirmButton:false}); } }); }
         function abrirGestorPrecios(){ document.getElementById('modalPrecios').classList.remove('hidden'); document.getElementById('searchGestor').value = ''; renderGestor(); }
         function renderGestor(){ const txt = document.getElementById('searchGestor').value.toLowerCase(); const lista = document.getElementById('listaGestorPrecios'); const filtrados = CAT.filter(m => m.n.toLowerCase().includes(txt)); lista.innerHTML = filtrados.map((m, i) => { const realIndex = CAT.indexOf(m); return ` <tr class="border-b border-gray-800 hover:bg-gray-800/50"> <td class="p-2">${m.n}</td> <td class="p-2 text-right font-bold text-green-400">$${m.p}</td> <td class="p-2 text-right"> <button onclick="editarPrecioMat(${realIndex})" class="text-yellow-500 mr-2">✏️</button> <button onclick="borrarMaterial(${realIndex})" class="text-red-500">🗑️</button> </td> </tr>`; }).join(''); }
         function editarPrecioMat(index){ const mat = CAT[index]; Swal.fire({ title: `Editar: ${mat.n}`, html: `<label class="block text-left text-xs text-gray-400">Nuevo Precio:</label> <input id="newPrice" type="number" class="swal2-input" value="${mat.p}">`, background: '#000', color: '#fff', confirmButtonColor: '#Eab308', preConfirm: () => { return document.getElementById('newPrice').value } }).then((result) => { if(result.isConfirmed){ CAT[index].p = parseFloat(result.value); saveLocal(); renderCat(); renderGestor(); } }); }
         function borrarMaterial(index){ CAT.splice(index, 1); saveLocal(); renderCat(); renderGestor(); }
-
         function renderTipos(){ if(!DB.tipos || DB.tipos.length === 0) DB.tipos = ["Portón", "Puerta", "Ventana", "Techumbre", "Barandal", "Estructura"]; document.getElementById('item_tipo').innerHTML = DB.tipos.map(t => `<option>${t}</option>`).join(''); }
         function nuevoTipoTrabajo(){ Swal.fire({title: 'Nuevo Tipo', input: 'text', background: '#000', color: '#fff', confirmButtonColor: '#00E5FF'}).then((r) => { if (r.value) { DB.tipos.push(r.value); saveLocal(); renderTipos(); document.getElementById('item_tipo').value = r.value; } }); }
         
-        function addMaterialToItem(){ const v=document.getElementById('inputBusquedaMat').value, m=CAT.find(x=>x.n===v); if(!m) return Swal.fire('Error','Material no encontrado. Usa [+ Nuevo]','warning'); itemActual.materiales.push({n:m.n,p:m.p,c:parseFloat(document.getElementById('mat_cant').value)||1}); document.getElementById('inputBusquedaMat').value=''; renderItemMat(); }
-        function renderItemMat(){ let t=0; document.getElementById('listaMaterialesTemp').innerHTML=itemActual.materiales.map((m,i)=>{ t+=m.p*m.c; return `<tr class="border-b border-gray-800"><td class="py-1">${m.c}</td><td>${m.n}</td><td class="text-right">$${(m.p*m.c).toFixed(0)}</td><td class="text-right text-red-500 cursor-pointer" onclick="delItemMat(${i})">x</td></tr>` }).join(''); document.getElementById('lblMonitorMateriales').innerText = `$${t.toFixed(2)}`; }
-        function delItemMat(i){itemActual.materiales.splice(i,1);renderItemMat();}
-        function agregarConceptoALista(){ const mo = parseFloat(document.getElementById('item_mo').value)||0; if(itemActual.materiales.length===0 && mo === 0) return Swal.fire('Vacío','Agrega materiales','warning'); let cMat=itemActual.materiales.reduce((s,m)=>s+(m.p*m.c),0); const inf=parseFloat(DB.config.inflacion)||0, ind=parseFloat(DB.config.indirectos)||0; const cFinal = cMat*(1+inf/100)*(1+ind/100); const fac=(parseFloat(document.getElementById('item_dif').value)||1); const inst=parseFloat(document.getElementById('item_inst').value)||0; listaConceptosGlobal.push({ tipo:document.getElementById('item_tipo').value, ancho:document.getElementById('item_ancho').value, alto:document.getElementById('item_alto').value, desc:document.getElementById('item_desc').value, mats:[...itemActual.materiales], subtotal: cFinal+(mo*fac)+inst }); itemActual.materiales=[]; document.getElementById('item_desc').value=''; document.getElementById('item_mo').value=0; document.getElementById('item_inst').value=0; renderItemMat(); renderListaGlobal(); Swal.fire({toast:true, position:'top-end', icon:'success', title:'Proyecto Agregado', timer:1000, showConfirmButton:false}); }
+        function addMaterialToItem(){ const v=document.getElementById('inputBusquedaMat').value, m=CAT.find(x=>x.n===v); if(!m) return Swal.fire('Error','Material no encontrado. Usa [+ Nuevo]','warning'); itemActual.materiales.push({n:m.n,p:m.p,c:parseFloat(document.getElementById('mat_cant').value)||1, l:0, a:0}); document.getElementById('inputBusquedaMat').value=''; renderItemMat(); }
+        
+        function renderItemMat(){ 
+            let grupos = {}; 
+            itemActual.materiales.forEach(m => {
+                if(!grupos[m.n]) grupos[m.n] = {p: m.p, totalCm: 0, esPieza: (m.l === 0 && m.a === 0)};
+                let cmPorPieza = 0;
+                if(m.a > 0 && m.l > 0) cmPorPieza = ((m.a + m.l) * 2) * 100; // Perímetro (m) -> CM
+                else if(m.l > 0) cmPorPieza = m.l * 100; // Lineal (m) -> CM
+                else cmPorPieza = 1; 
+                if(m.l === 0 && m.a === 0) grupos[m.n].totalCm += m.c; else grupos[m.n].totalCm += (cmPorPieza * m.c); 
+            });
+            let html = ''; let costoTotalMaterial = 0;
+            for (const [nombre, data] of Object.entries(grupos)) {
+                let cantidadCobrar = 0, desc = '';
+                if(data.esPieza) { cantidadCobrar = data.totalCm; desc = `${cantidadCobrar} Pzas`; } 
+                else { const tramos = Math.ceil(data.totalCm / 600); cantidadCobrar = tramos; desc = `${tramos} Tramos 6m (Uso: ${(data.totalCm/100).toFixed(2)}m)`; }
+                const subtotal = cantidadCobrar * data.p; costoTotalMaterial += subtotal;
+                html += `<tr class="border-b border-gray-800 text-[10px]"><td class="py-1 text-white">${nombre} <span class="text-gray-500">(${desc})</span></td><td class="text-right text-green-400">$${subtotal.toFixed(0)}</td><td class="text-right text-red-500 cursor-pointer" onclick="delItemMat('${nombre}')">x</td></tr>`;
+            }
+            document.getElementById('listaMaterialesTemp').innerHTML = html; 
+            document.getElementById('lblMonitorMateriales').innerText = `$${costoTotalMaterial.toFixed(2)}`; 
+            if(document.getElementById('item_ind')) {
+                const actualInd = parseFloat(document.getElementById('item_ind').value) || 0;
+                if(actualInd === 0 && costoTotalMaterial > 0) document.getElementById('item_ind').value = (costoTotalMaterial * 0.10).toFixed(2);
+            }
+            return costoTotalMaterial;
+        }
+
+        function delItemMat(nombre){ itemActual.materiales = itemActual.materiales.filter(m => m.n !== nombre); renderItemMat(); }
+        function toggleMetodoCobro() {
+            const esManual = document.getElementById('chkModoCobro').checked;
+            document.getElementById('panelCobroAuto').classList.toggle('hidden', esManual);
+            document.getElementById('panelCobroManual').classList.toggle('hidden', !esManual);
+        }
+
+        function agregarConceptoALista(){ 
+            const costoMat = renderItemMat(); if(costoMat === 0) return Swal.fire('Vacío','Agrega materiales','warning'); 
+            const inf = parseFloat(DB.config.inflacion)||0, ind=parseFloat(DB.config.indirectos)||0; 
+            const cMatFinal = costoMat*(1+inf/100)*(1+ind/100); 
+            let precioConcepto = 0;
+            const esManual = document.getElementById('chkModoCobro').checked;
+            if (esManual) {
+                const mo = parseFloat(document.getElementById('item_mo').value)||0;
+                const inst = parseFloat(document.getElementById('item_inst').value)||0;
+                const herra = parseFloat(document.getElementById('item_herra').value)||0;
+                const ind = parseFloat(document.getElementById('item_ind').value)||0;
+                const fac = parseFloat(document.getElementById('item_dif').value)||1;
+                precioConcepto = costoMat + ind + (mo * fac) + inst + herra;
+            } else {
+                const mult = parseFloat(document.getElementById('cmbMultiplicador').value);
+                precioConcepto = cMatFinal * mult;
+            }
+            listaConceptosGlobal.push({ tipo:document.getElementById('item_tipo').value, ancho:document.getElementById('item_ancho').value, alto:document.getElementById('item_alto').value, desc:document.getElementById('item_desc').value, mats:[...itemActual.materiales], subtotal: precioConcepto }); 
+            itemActual.materiales=[]; ['item_desc','item_mo','item_inst','item_herra','item_ind'].forEach(id=> {if(document.getElementById(id)) document.getElementById(id).value=''});
+            renderItemMat(); renderListaGlobal(); Swal.fire({toast:true, position:'top-end', icon:'success', title:'Proyecto Agregado', timer:1000, showConfirmButton:false}); 
+        }
+
         function renderListaGlobal(){ const c=document.getElementById('listaConceptosGlobal'); if(listaConceptosGlobal.length===0){c.innerHTML='<div class="text-center text-gray-700 text-xs py-10 italic">Aún no agregas proyectos.</div>';calcGlobal();return;} c.innerHTML=listaConceptosGlobal.map((x,i)=>` <div class="glass-card p-2 border-l-2 border-[#00E5FF] relative group mb-2"> <button onclick="borrarC(${i})" class="absolute top-1 right-1 text-red-500 opacity-0 group-hover:opacity-100 font-bold">x</button> <h4 class="text-white text-xs font-bold">${i+1}. ${x.tipo} (${x.ancho}x${x.alto}m)</h4> <div class="flex justify-between mt-1 text-[10px]"> <span class="text-gray-500 w-32 truncate">${x.desc}</span> <span class="text-[#00E5FF] font-bold">$${x.subtotal.toFixed(2)}</span> </div> </div>`).join(''); calcGlobal(); }
         function borrarC(i){listaConceptosGlobal.splice(i,1);renderListaGlobal();}
 
@@ -372,59 +512,149 @@
             document.getElementById('lblGlobalSub').innerText=`$${sub.toFixed(2)}`; 
             document.getElementById('lblGlobalIva').innerText=`$${ivaAmount.toFixed(2)}`; 
             document.getElementById('lblGlobalTotal').innerText=`$${(base + ivaAmount).toFixed(2)}`; 
-            const costoPuro = sub / (1 + (parseFloat(DB.config.indirectos)/100)); const utilidad = base - costoPuro;
-            document.getElementById('lblUtilidad').innerText = `Utilidad aprox: $${utilidad.toFixed(2)}`;
+            const costoPuro = sub / 2.5; document.getElementById('lblUtilidad').innerText = `Utilidad aprox: $${(base - costoPuro).toFixed(2)}`;
             return {sub, fl, ma, desc, iva: ivaAmount, total: base + ivaAmount}; 
         }
 
-        function nuevoPedidoFull(){ listaConceptosGlobal=[]; itemActual={materiales:[]}; ['p_cliente','p_tel','p_ubi','item_desc','inputBusquedaMat'].forEach(i=>document.getElementById(i).value=''); document.getElementById('mat_cant').value=1; document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0; document.getElementById('global_desc').value=0; document.getElementById('chkIva').checked = false; document.getElementById('chkDesglose').checked = false; generarFolio(); renderItemMat(); renderListaGlobal(); verCotizador(); }
+        function nuevoPedidoFull(){ listaConceptosGlobal=[]; itemActual={materiales:[]}; ['p_cliente','p_tel','p_ubi','item_desc','inputBusquedaMat'].forEach(i=>document.getElementById(i).value=''); document.getElementById('global_flete').value=0; document.getElementById('global_mani').value=0; document.getElementById('global_desc').value=0; document.getElementById('chkIva').checked = false; document.getElementById('chkDesglose').checked = false; generarFolio(); renderItemMat(); renderListaGlobal(); verCotizador(); }
         function generarFolio(){DB.config.folioCount++;document.getElementById('p_folio').value=`${DB.config.rol}-${DB.config.folioCount}`;saveLocal();}
         function guardarPresupuestoGlobal(){ const folio = document.getElementById('p_folio').value; DB.proyectos = DB.proyectos.filter(p => p.folio !== folio); DB.proyectos.push({ folio: folio, cliente: document.getElementById('p_cliente').value, tel: document.getElementById('p_tel').value, ubi: document.getElementById('p_ubi').value, total: document.getElementById('lblGlobalTotal').innerText, estado: 'Pendiente', conceptos: [...listaConceptosGlobal], flete: document.getElementById('global_flete').value, mani: document.getElementById('global_mani').value, desc: document.getElementById('global_desc').value, iva: document.getElementById('chkIva').checked, desglose: document.getElementById('chkDesglose').checked, fecha: new Date().toLocaleDateString() }); saveLocal(); Swal.fire({title:'Guardado',text:'Puedes recuperarlo en el historial',icon:'success',confirmButtonColor:'#00E5FF'}); verDashboard(); }
         function cargarProyecto(folio, duplicar = false){ const p = DB.proyectos.find(x => x.folio === folio); if(!p) return; nuevoPedidoFull(); if(duplicar) Swal.fire({toast:true, icon:'success', title:'Proyecto Duplicado', position:'top-end'}); else { document.getElementById('p_folio').value = p.folio; let numFolio = parseInt(p.folio.split('-')[1]); if(numFolio) DB.config.folioCount = numFolio - 1; Swal.fire({toast:true, icon:'info', title:'Editando: ' + folio, position:'top-end'}); } document.getElementById('p_cliente').value = p.cliente || ''; document.getElementById('p_tel').value = p.tel || ''; document.getElementById('p_ubi').value = p.ubi || ''; if(p.conceptos) listaConceptosGlobal = JSON.parse(JSON.stringify(p.conceptos)); document.getElementById('global_flete').value = p.flete || 0; document.getElementById('global_mani').value = p.mani || 0; document.getElementById('global_desc').value = p.desc || 0; document.getElementById('chkIva').checked = p.iva || false; document.getElementById('chkDesglose').checked = p.desglose || false; renderListaGlobal(); verCotizador(); }
         
         function calcularListaCompra() { if(listaConceptosGlobal.length === 0) return Swal.fire('Sin datos', 'Agrega conceptos primero', 'warning'); let resumen = {}; listaConceptosGlobal.forEach(c => { c.mats.forEach(m => { if(!resumen[m.n]) resumen[m.n] = 0; resumen[m.n] += m.c; }); }); let htmlTabla = '<table class="w-full text-left text-sm text-gray-300 border-collapse"><tr class="border-b border-gray-600"><th class="py-2">Material</th><th class="py-2 text-right">Total</th></tr>'; for (const [nombre, cantidad] of Object.entries(resumen)) { htmlTabla += `<tr class="border-b border-gray-800"><td class="py-2">${nombre}</td><td class="py-2 text-right font-bold text-[#00E5FF]">${cantidad}</td></tr>`; } htmlTabla += '</table>'; Swal.fire({ title: '📋 Lista de Compra', html: htmlTabla, background: '#000', color: '#fff', confirmButtonColor: '#00E5FF' }); }
+        
+        function generarPDFListaCompra() { 
+            if(listaConceptosGlobal.length === 0) return Swal.fire('Sin datos', 'Agrega conceptos primero', 'warning'); 
+            const { jsPDF } = window.jspdf; const doc = new jsPDF(); 
+            
+            // INTENTAR CARGAR LOGO
+            let logoData = DB.config.logoBase64;
+            if(!logoData || logoData.length < 50) {
+                const imgElement = document.getElementById('landingLogoImg');
+                if(imgElement && imgElement.src.startsWith('data:image')) logoData = imgElement.src;
+            }
+            if(logoData) { try{ doc.addImage(logoData,'PNG',15,10,25,25); }catch(e){} }
 
+            doc.setFontSize(16); doc.text("LISTA DE COMPRA - " + DATOS.nom, 50, 20);
+            doc.setFontSize(10); doc.text("Cliente: " + document.getElementById('p_cliente').value, 50, 28);
+            doc.text("Fecha: " + new Date().toLocaleDateString(), 150, 28);
+
+            let resumen = {}; 
+            listaConceptosGlobal.forEach(c => { 
+                c.mats.forEach(m => { 
+                    if(!resumen[m.n]) resumen[m.n] = {totalCm: 0, esPieza: (m.l === 0 && m.a === 0)}; 
+                    let cm = (m.a > 0 && m.l > 0) ? ((m.a+m.l)*2)*100 : m.l*100; 
+                    if(m.l===0 && m.a===0) resumen[m.n].totalCm += m.c; else resumen[m.n].totalCm += (cm * m.c); 
+                }); 
+            }); 
+            
+            let rows = [];
+            for (const [nombre, data] of Object.entries(resumen)) { 
+                let comprar = data.esPieza ? `${data.totalCm} Pzas` : `${Math.ceil(data.totalCm / 600)} Tramos (6m)`; 
+                rows.push([nombre, comprar]);
+            }
+            doc.autoTable({ startY: 40, head: [['Material', 'Cantidad a Comprar']], body: rows });
+            doc.save('lista_compra.pdf');
+        }
+
+        // --- DASHBOARD TAGS ---
         function updateDashboard(filtro = null){
             let totalVentas = 0; let pendientes = 0;
-            DB.proyectos.forEach(p => { if(p.estado === 'Vendido') totalVentas += parseFloat(p.total.replace('$','').replace(',','')); if(p.estado === 'Pendiente') pendientes++; });
+            DB.proyectos.forEach(p => { 
+                if(p.estado === 'Aprobado') totalVentas += parseFloat(p.total.replace('$','').replace(',','')); 
+                if(p.estado === 'Pendiente') pendientes++; 
+            });
             document.getElementById('statVentas').innerText = `$${totalVentas.toLocaleString('es-MX')}`; document.getElementById('statPend').innerText = pendientes;
-            let lista = DB.proyectos.slice().reverse(); if(filtro) lista = lista.filter(p => p.estado === filtro);
-            document.getElementById('tablaHistorial').innerHTML = lista.map(p => { let colorEstado = 'text-yellow-500'; if(p.estado === 'Vendido') colorEstado = 'text-green-500'; if(p.estado === 'Cancelado') colorEstado = 'text-red-500'; return ` <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer group"> <td class="p-2 text-[#00E5FF] font-bold" onclick="cargarProyecto('${p.folio}')">${p.folio}</td> <td class="p-2 truncate max-w-[100px]" onclick="cargarProyecto('${p.folio}')">${p.cliente}</td> <td class="p-2" onclick="cargarProyecto('${p.folio}')">${p.total}</td> <td class="p-2 ${colorEstado} font-bold text-[10px] uppercase" onclick="cargarProyecto('${p.folio}')">${p.estado}</td> <td class="p-2 text-right flex gap-2 justify-end"> <button onclick="cargarProyecto('${p.folio}', true)" title="Clonar" class="text-purple-400 hover:scale-125 transition">👯</button> <button onclick="cambiarEstado('${p.folio}','Vendido')" title="Vendido" class="text-green-500 hover:scale-125 transition">✅</button> <button onclick="cambiarEstado('${p.folio}','Cancelado')" title="Cancelar" class="text-red-500 hover:scale-125 transition">❌</button> <button onclick="delHist('${p.folio}')" title="Borrar" class="text-gray-500 hover:text-white transition">🗑️</button> </td> </tr>`; }).join('');
+            filtrarHistorial(filtro);
         }
-        function filtrarHistorial(estado) { updateDashboard(estado); Swal.fire({toast:true, title:'Filtrando: '+estado, icon:'info', position:'top-end', timer:1000, showConfirmButton:false}); }
+        function filtrarHistorial(estado) { 
+            const lista = estado ? DB.proyectos.filter(p => p.estado === estado) : DB.proyectos; 
+            document.getElementById('tablaHistorial').innerHTML = lista.slice().reverse().map(p => {
+                let color = 'text-gray-500';
+                if(p.estado === 'Aprobado') color = 'text-green-500';
+                if(p.estado === 'No Aprobado') color = 'text-red-500';
+                if(p.estado === 'Se fue con otro') color = 'text-yellow-500';
+                return ` <tr class="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer group"> <td class="p-2 text-[#00E5FF] font-bold" onclick="cargarProyecto('${p.folio}')">${p.folio}</td> <td class="p-2 truncate max-w-[100px]" onclick="cargarProyecto('${p.folio}')">${p.cliente}</td> <td class="p-2" onclick="cargarProyecto('${p.folio}')">${p.total}</td> <td class="p-2 uppercase text-[10px] ${color}" onclick="cargarProyecto('${p.folio}')">${p.estado}</td> <td class="p-2 text-right flex gap-2 justify-end"> <button onclick="cambiarStatusUI('${p.folio}')" title="Estado" class="text-white hover:scale-125 transition">🏷️</button> <button onclick="delHist('${p.folio}')" title="Borrar" class="text-gray-500 hover:text-white transition">🗑️</button> </td> </tr>`; 
+            }).join(''); 
+        }
         function renderHistorial() { updateDashboard(); }
-        function cambiarEstado(folio, nuevoEstado){ const p = DB.proyectos.find(x => x.folio === folio); if(p){ p.estado = nuevoEstado; saveLocal(); updateDashboard(); Swal.fire({toast:true, position:'top-end', icon:'success', title:`Marcado como ${nuevoEstado}`, timer:1500, showConfirmButton:false}); } }
+        function cambiarStatusUI(folio) {
+            Swal.fire({
+                title: 'Actualizar Estado',
+                input: 'radio',
+                inputOptions: { 'Aprobado': '✅ Aprobado', 'No Aprobado': '❌ No Aprobado', 'Se fue con otro': '👋 Se fue con otro', 'Pendiente': '⏳ Pendiente' },
+                inputValue: 'Pendiente',
+                confirmButtonColor: '#00E5FF', background: '#111', color: '#fff'
+            }).then((result) => { if (result.isConfirmed) cambiarEstado(folio, result.value); });
+        }
+        function cambiarEstado(folio, nuevoEstado){ const p = DB.proyectos.find(x => x.folio === folio); if(p){ p.estado = nuevoEstado; saveLocal(); updateDashboard(); Swal.fire({toast:true, position:'top-end', icon:'success', title:`Estado: ${nuevoEstado}`, timer:1500, showConfirmButton:false}); } }
         function delHist(f){ Swal.fire({title:'¿Borrar?',text:'No se podrá recuperar',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',background:'#000',color:'#fff'}).then(r=>{ if(r.isConfirmed){ DB.proyectos = DB.proyectos.filter(p => p.folio !== f); saveLocal(); updateDashboard(); } }); }
         
-        function guardarPlantilla(){if(itemActual.materiales.length>0)Swal.fire({title:'Nombre',input:'text',background:'#000',color:'#fff'}).then(r=>{if(r.value){DB.plantillas.push({n:r.value,m:[...itemActual.materiales]});saveLocal();Swal.fire('Guardado');}});}
-        function cargarPlantilla(){if(DB.plantillas.length===0)return Swal.fire('Sin plantillas');const o={};DB.plantillas.forEach((p,i)=>o[i]=p.n);Swal.fire({title:'Elegir',input:'select',inputOptions:o,background:'#000',color:'#fff'}).then(r=>{if(r.isConfirmed){itemActual.materiales=[...DB.plantillas[r.value].m];renderItemMat();}});}
-        function verDashboard(){hideAll();document.getElementById('viewDashboard').classList.remove('hidden');updateDashboard();}
-        function verCotizador(){hideAll();document.getElementById('viewCotizador').classList.remove('hidden');}
-        function hideAll(){document.querySelectorAll('#adminPanel > div[id^="view"]').forEach(d=>d.classList.add('hidden'));}
         function saveLocal(){ DB.catalogoPersonalizado = CAT; localStorage.setItem('celis_v16',JSON.stringify(DB)); }
         function loadLocal(){ const d=localStorage.getItem('celis_v16'); if(d){ DB=JSON.parse(d); if(DB.catalogoPersonalizado && DB.catalogoPersonalizado.length > 0){ CAT = DB.catalogoPersonalizado; } } }
-        function abrirConfig(){document.getElementById('modalConfig').classList.remove('hidden');loadUI();}
-        function cerrarConfig(){document.getElementById('modalConfig').classList.add('hidden');}
-        function loadUI(){document.getElementById('conf_inflacion').value=DB.config.inflacion;document.getElementById('conf_url').value=DB.config.scriptURL||''; document.getElementById('conf_drive').value=DB.config.driveID||''; }
-        function guardarConfig(){ DB.config.inflacion=document.getElementById('conf_inflacion').value; DB.config.indirectos=document.getElementById('conf_indirectos').value; DB.config.scriptURL=document.getElementById('conf_url').value; DB.config.driveID=document.getElementById('conf_drive').value; const processFile = (id, key) => { const f = document.getElementById(id).files[0]; if(f){ const r=new FileReader(); r.onload=e=>{DB.config[key]=e.target.result; saveLocal();}; r.readAsDataURL(f); } }; processFile('conf_logo', 'logoBase64'); processFile('conf_codi', 'codiBase64'); setTimeout(()=>{saveLocal(); Swal.fire('Guardado'); cerrarConfig(); checkLogo();}, 500); }
-        
         async function sincronizarNube(){if(!DB.config.scriptURL)return Swal.fire('Falta URL');try{await fetch(DB.config.scriptURL,{method:'POST',mode:'no-cors',body:JSON.stringify({action:'backup',data:DB, driveID:DB.config.driveID})});Swal.fire('Respaldo enviado a Nube/Drive');}catch(e){Swal.fire('Error',e.message);}}
 
         async function generarPDFMaster(tipo){
             if(listaConceptosGlobal.length===0) return Swal.fire('Error','Agrega al menos un proyecto a la lista','error');
             const { jsPDF } = window.jspdf; const doc = new jsPDF(); const cg = calcGlobal(); const fol = document.getElementById('p_folio').value; const desglose = document.getElementById('chkDesglose').checked; 
-            if(DB.config.logoBase64) try{doc.addImage(DB.config.logoBase64,'PNG',10,10,25,25)}catch(e){}
-            doc.setFont("helvetica","bold"); doc.setFontSize(16); doc.text(DATOS.nom,40,18); doc.setFontSize(8); doc.setTextColor(80); doc.setFont("helvetica","normal"); doc.text(DATOS.slogan,40,23); doc.text(DATOS.dir,40,28); doc.text(`Tel: ${DATOS.tel} | RFC: ${DATOS.rfc}`,40,33); 
-            doc.setFillColor(240); doc.rect(150,10,45,15,'F'); doc.setFontSize(12); doc.setTextColor(0,0,100); doc.text(fol,172,20,{align:'center'}); doc.line(10,38,200,38); doc.setFontSize(10); doc.setTextColor(0); doc.text(`Cliente: ${document.getElementById('p_cliente').value}`,10,45); doc.text(`Tel: ${document.getElementById('p_tel').value}`,100,45); doc.text(`Obra: ${document.getElementById('p_ubi').value}`,10,50);
-            let y=60;
+            
+            // LOGO LOGIC
+            let logoData = DB.config.logoBase64;
+            if(!logoData || logoData.length < 50) {
+                const imgElement = document.getElementById('landingLogoImg');
+                if(imgElement && imgElement.src.startsWith('data:image')) logoData = imgElement.src;
+            }
+            if(logoData) try{doc.addImage(logoData,'PNG',10,10,30,30)}catch(e){}
+
+            doc.setFont("helvetica","bold"); doc.setFontSize(18); doc.text(DATOS.nom, 45, 18);
+            doc.setFontSize(9); doc.setFont("helvetica","normal"); doc.setTextColor(80);
+            doc.text(DATOS.slogan, 45, 23);
+            doc.text(DATOS.dir, 45, 28);
+            doc.text(`RFC: ${DATOS.rfc} | Tel: ${DATOS.tel} | WA: ${DATOS.wa}`, 45, 33);
+            doc.text(DATOS.regimen, 45, 38, {maxWidth: 100}); 
+
+            // FOLIO
+            doc.setFillColor(240); doc.rect(150,10,45,15,'F'); doc.setFontSize(12); doc.setTextColor(0,0,100); doc.text(fol,172,20,{align:'center'}); doc.line(10,45,200,45); 
+            doc.setFontSize(10); doc.setTextColor(0); doc.text(`Cliente: ${document.getElementById('p_cliente').value}`,10,52); doc.text(`Tel: ${document.getElementById('p_tel').value}`,100,52); doc.text(`Obra: ${document.getElementById('p_ubi').value}`,10,57);
+            
+            let y=65;
             if(tipo==='cliente'){
-                listaConceptosGlobal.forEach((c,i)=>{ doc.setFont("helvetica","bold"); doc.setTextColor(0,51,102); doc.text(`${i+1}. ${c.tipo} (${c.ancho}x${c.alto}m)`,10,y); y+=5; doc.setFont("helvetica","normal"); doc.setTextColor(60); doc.text(c.desc,10,y); y+=5; if(desglose){ let rows = c.mats.map(m=>[`  - ${m.n} (x${m.c})`, '']); rows.push(['Mano de Obra y Fabricación', '']); rows.push(['SUBTOTAL CONCEPTO', `$${c.subtotal.toFixed(2)}`]); doc.autoTable({startY:y, body:rows, theme:'plain', styles:{fontSize:9}}); } else { doc.autoTable({startY:y,head:[['Descripción','Importe']],body:[['Suministro y Fabricación',`$${c.subtotal.toFixed(2)}`]],theme:'grid',styles:{fontSize:10}}); } y=doc.lastAutoTable.finalY+8; });
-                let startX = 140; doc.setFontSize(10); doc.setTextColor(0); if(cg.fl>0){doc.text(`Flete: $${cg.fl.toFixed(2)}`,startX,y); y+=5;} if(cg.ma>0){doc.text(`Maniobras: $${cg.ma.toFixed(2)}`,startX,y); y+=5;} if(cg.desc>0){ doc.setTextColor(200,0,0); doc.text(`Descuento: -$${cg.desc.toFixed(2)}`,startX,y); doc.setTextColor(0); y+=5; } if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} 
-                doc.setFillColor(0,51,102); doc.rect(130,y,70,10,'F'); doc.setTextColor(255); doc.setFont("helvetica","bold"); doc.setFontSize(14); doc.text(`TOTAL: $${cg.total.toFixed(2)}`,195,y+7,{align:'right'}); doc.setTextColor(0); doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.text("DATOS DE PAGO:", 10, 250); doc.setFont("helvetica","normal"); doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta}`, 10, 255); doc.text(`CLABE: ${DATOS.clabe}`, 10, 260); if(DB.config.codiBase64){try{doc.text("CODI:",130,250);doc.addImage(DB.config.codiBase64,'PNG',130,252,25,25);}catch(e){}}
-            } else { listaConceptosGlobal.forEach((c,i)=>{ doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5; let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10; }); }
+                let bodyData = [];
+                listaConceptosGlobal.forEach((c, i) => {
+                    bodyData.push([{ content: `${i+1}. ${c.tipo} (${c.ancho}x${c.alto}m)`, colSpan: 2, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }]);
+                    bodyData.push([c.desc, `$${c.subtotal.toFixed(2)}`]);
+                    if(desglose){ c.mats.forEach(m => bodyData.push([`  • ${m.n} (x${m.c})`, ''])); }
+                });
+
+                doc.autoTable({ startY: y, head: [['Descripción', 'Importe']], body: bodyData, theme: 'grid', styles: { fontSize: 10, cellPadding: 2 }, columnStyles: { 0: { cellWidth: 140, overflow: 'linebreak' }, 1: { cellWidth: 40, halign: 'right' } }, headStyles: { fillColor: [0, 229, 255], textColor: [0,0,0], fontStyle: 'bold' }, margin: { bottom: 60 } });
+                
+                y = doc.lastAutoTable.finalY + 10;
+                let startX = 140; doc.setFontSize(10); doc.setTextColor(0); 
+                if(cg.fl>0){doc.text(`Flete: $${cg.fl.toFixed(2)}`,startX,y); y+=5;} 
+                if(cg.ma>0){doc.text(`Maniobras: $${cg.ma.toFixed(2)}`,startX,y); y+=5;} 
+                if(cg.desc>0){ doc.setTextColor(200,0,0); doc.text(`Descuento: -$${cg.desc.toFixed(2)}`,startX,y); doc.setTextColor(0); y+=5; } 
+                if(cg.iva>0){doc.text(`IVA (16%): $${cg.iva.toFixed(2)}`,startX,y); y+=5;} 
+                
+                doc.setFillColor(0,51,102); doc.rect(130,y,70,12,'F'); doc.setTextColor(255); doc.setFontSize(14); doc.setFont("helvetica","bold"); doc.text(`TOTAL: $${cg.total.toFixed(2)}`,195,y+8,{align:'right'}); 
+                
+                // PIE DE PAGINA FIJO
+                const pageHeight = doc.internal.pageSize.height;
+                let footerY = pageHeight - 45; 
+                doc.setTextColor(0); doc.setFontSize(8); doc.setFont("helvetica","bold"); doc.text("DATOS BANCARIOS:", 10, footerY); doc.setFont("helvetica","normal"); doc.text(`Banco: ${DATOS.banco} | Cta: ${DATOS.cuenta} | CLABE: ${DATOS.clabe}`, 10, footerY+5);
+                footerY += 15; doc.setFontSize(7); doc.setTextColor(100); doc.text("NOTA:", 10, footerY); doc.text("• VALIDEZ DEL DOCUMENTO 7 DÍAS, PRECIO SUJETO A CAMBIO SIN PREVIO AVISO.", 10, footerY+4); doc.text("• ESTE PRESUPUESTO SOLAMENTE SE APLICA A LOS TRABAJOS ARRIBA DESCRITOS.", 10, footerY+8); doc.text("• PARA INICIAR EL TRABAJO SE REQUIERE DEL 70% DE ANTICIPO.", 10, footerY+12);
+                if(DB.config.codiBase64){ try{ doc.text("PAGA CON CODI:", 150, footerY-15); doc.addImage(DB.config.codiBase64, 'PNG', 150, footerY-13, 25, 25); } catch(e){} }
+
+            } else { 
+                listaConceptosGlobal.forEach((c,i)=>{ doc.setFontSize(12); doc.text(`${c.tipo} (${c.ancho}x${c.alto})`,10,y); y+=5; doc.setFontSize(9); doc.text(c.desc,10,y); y+=5; let r=c.mats.map(m=>[m.c,m.n,'']); doc.autoTable({startY:y,head:[['#','Mat','OK']],body:r,theme:'grid'}); y=doc.lastAutoTable.finalY+10; }); 
+            }
             doc.save(`${fol}_${tipo}.pdf`);
         }
+        
+        function verCotizador(){hideAll();document.getElementById('viewCotizador').classList.remove('hidden');}
+        function hideAll(){document.querySelectorAll('#adminPanel > div[id^="view"]').forEach(d=>d.classList.add('hidden'));}
+        // [OPTIMIZADOR SIMPLE]
+        function abrirOptimizador(){document.getElementById('modalOptimizador').classList.remove('hidden');}
+        // [LEGACY RESTAURADO]
     </script>
 </body>
 </html>
-
