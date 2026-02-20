@@ -652,9 +652,11 @@
         
         function verCotizador(){hideAll();document.getElementById('viewCotizador').classList.remove('hidden');}
         function hideAll(){document.querySelectorAll('#adminPanel > div[id^="view"]').forEach(d=>d.classList.add('hidden'));}
+        function verDashboard(){hideAll();document.getElementById('viewDashboard').classList.remove('hidden');updateDashboard();}
         // [OPTIMIZADOR SIMPLE]
         function abrirOptimizador(){document.getElementById('modalOptimizador').classList.remove('hidden');}
         // [LEGACY RESTAURADO]
     </script>
 </body>
 </html>
+
